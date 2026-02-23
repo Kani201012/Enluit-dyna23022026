@@ -1,327 +1,503 @@
 import streamlit as st
-import pandas as pd
-import requests
-import json
 import zipfile
 import io
+import json
+import re
+import requests
 
-# --- 0. ENGINE CONFIGURATION ---
-ST_PAGE_TITLE = "Titan Architect | 2050 Edition"
-ST_ICON = "🧬"
+# ==========================================
+# 🏛️ TITAN CORE: CONFIGURATION & STATE
+# ==========================================
 
-st.set_page_config(layout="wide", page_title=ST_PAGE_TITLE, page_icon=ST_ICON)
+st.set_page_config(
+    page_title="Titan Engine | Infinity Edition",
+    layout="wide",
+    page_icon="⚡",
+    initial_sidebar_state="expanded"
+)
 
-# --- 1. STATE MANAGEMENT (MEMORY) ---
-if 'site_data' not in st.session_state:
-    st.session_state.site_data = {
-        "brand": "StopWebRent",
+# Initialize Session State with defaults
+if 'config' not in st.session_state:
+    st.session_state.config = {
+        "biz_name": "Stop Web Rent",
         "tagline": "The Future is Static.",
-        "colors": {"primary": "#2563eb", "secondary": "#ec4899", "bg": "#0f172a", "text": "#f8fafc"},
-        "hero": {"title": "Own Your Digital Empire", "sub": "Zero monthly fees. Infinite scalability.", "img": "https://images.unsplash.com/photo-1620641788421-7f1a91b80e84?q=80&w=1600"},
-        "features": [
-            {"icon": "⚡", "title": "0.1s Load Time", "desc": "Edge-computed architecture."},
-            {"icon": "🛡️", "title": "Zero-DB Security", "desc": "No database to hack."},
-            {"icon": "💸", "title": "One-Time Payment", "desc": "Stop renting your existence."}
-        ],
-        "data_sources": {
-            "store_csv": "", 
-            "blog_csv": ""
-        },
-        "contact": {"phone": "", "email": "hello@stopwebrent.com", "wa": ""}
+        "primary_col": "#0f172a",
+        "accent_col": "#ef4444",
+        "font_head": "Space Grotesk",
+        "font_body": "Inter",
+        "wa_num": "966572562151",
+        "data_store": "",
+        "data_blog": "",
+        "google_analytics": ""
     }
 
-# --- 2. THE GENERATOR ENGINE (CORE LOGIC) ---
-class TitanEngine:
-    def __init__(self, data):
-        self.d = data
+# ==========================================
+# 🎨 TITAN CORE: CSS & JS GENERATORS
+# ==========================================
 
-    def _get_tailwind_config(self):
-        # Inject dynamic colors into Tailwind
+class AssetGenerator:
+    """Generates the liquid logic (CSS/JS) for the generated site."""
+    
+    @staticmethod
+    def get_css(c):
         return f"""
-        <script src="https://cdn.tailwindcss.com"></script>
-        <script>
-            tailwind.config = {{
-                theme: {{
-                    extend: {{
-                        colors: {{
-                            brand: '{self.d['colors']['primary']}',
-                            accent: '{self.d['colors']['secondary']}',
-                            dark: '{self.d['colors']['bg']}',
-                            light: '{self.d['colors']['text']}'
-                        }},
-                        fontFamily: {{
-                            sans: ['Inter', 'sans-serif'],
-                        }}
-                    }}
-                }}
-            }}
-        </script>
-        <style>
-            body {{ background-color: {self.d['colors']['bg']}; color: {self.d['colors']['text']}; }}
-            .glass {{ background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }}
-            .gradient-text {{ background: linear-gradient(to right, {self.d['colors']['primary']}, {self.d['colors']['secondary']}); -webkit-background-clip: text; color: transparent; }}
-        </style>
+        :root {{
+            --p: {c['primary_col']}; --s: {c['accent_col']};
+            --bg: #ffffff; --txt: #1e293b; --surface: #f8fafc;
+            --font-h: '{c['font_head']}', sans-serif;
+            --font-b: '{c['font_body']}', sans-serif;
+            --shadow: 0 10px 30px -10px rgba(0,0,0,0.1);
+        }}
+        @media (prefers-color-scheme: dark) {{
+            :root {{ --bg: #0f172a; --txt: #f1f5f9; --surface: #1e293b; }}
+        }}
+        * {{ box-sizing: border-box; }}
+        body {{ margin: 0; font-family: var(--font-b); background: var(--bg); color: var(--txt); line-height: 1.6; overflow-x: hidden; }}
+        h1, h2, h3, h4 {{ font-family: var(--font-h); color: var(--p); line-height: 1.1; margin-bottom: 1rem; }}
+        .dark-mode h1, .dark-mode h2 {{ color: #fff; }}
+        
+        /* LAYOUT */
+        .container {{ max-width: 1280px; margin: 0 auto; padding: 0 20px; }}
+        section {{ padding: 4rem 0; }}
+        .grid-3 {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; }}
+        
+        /* COMPONENTS */
+        .btn {{ 
+            display: inline-flex; align-items: center; justify-content: center;
+            padding: 1rem 2rem; border-radius: 8px; font-weight: 700; 
+            text-decoration: none; transition: 0.3s; cursor: pointer; border: none;
+        }}
+        .btn-primary {{ background: var(--p); color: white; }}
+        .btn-accent {{ background: var(--s); color: white; }}
+        .btn:hover {{ transform: translateY(-3px); box-shadow: var(--shadow); filter: brightness(1.1); }}
+        
+        .card {{ 
+            background: var(--surface); padding: 2rem; border-radius: 12px; 
+            border: 1px solid rgba(128,128,128,0.1); transition: 0.3s; 
+            display: flex; flex-direction: column;
+        }}
+        .card:hover {{ transform: translateY(-5px); box-shadow: var(--shadow); border-color: var(--s); }}
+        
+        .prod-img {{ width: 100%; height: 250px; object-fit: cover; border-radius: 8px; margin-bottom: 1rem; background: #ddd; }}
+        
+        /* NAVIGATION */
+        nav {{ position: sticky; top: 0; z-index: 999; background: rgba(255,255,255,0.9); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(0,0,0,0.05); }}
+        .dark-mode nav {{ background: rgba(15,23,42,0.9); }}
+        .nav-inner {{ display: flex; justify-content: space-between; align-items: center; height: 70px; }}
+        .nav-links a {{ margin-left: 2rem; text-decoration: none; color: var(--txt); font-weight: 600; opacity: 0.8; transition: 0.2s; }}
+        .nav-links a:hover {{ color: var(--s); opacity: 1; }}
+        
+        /* UTILS */
+        .reveal {{ opacity: 0; transform: translateY(30px); transition: 0.8s ease; }}
+        .reveal.active {{ opacity: 1; transform: translateY(0); }}
+        
+        /* MOBILE */
+        @media (max-width: 768px) {{
+            .nav-links {{ display: none; }} 
+            h1 {{ font-size: 2.5rem; }}
+        }}
         """
 
-    def _get_alpine_logic(self):
-        # The Brain of the 2050 Site (Client-Side Logic)
-        store_url = self.d['data_sources']['store_csv']
+    @staticmethod
+    def get_js(c):
         return f"""
-        <script src="//unpkg.com/alpinejs" defer></script>
-        <script>
-            function app() {{
-                return {{
-                    view: 'home',
-                    cart: [],
-                    products: [],
-                    loading: false,
-                    
-                    async init() {{
-                        this.cart = JSON.parse(localStorage.getItem('titan_cart')) || [];
-                        const csvUrl = '{store_url}';
-                        if(csvUrl) {{
-                            this.loading = true;
-                            try {{
-                                const res = await fetch(csvUrl);
-                                const text = await res.text();
-                                this.products = this.parseCSV(text);
-                            }} catch(e) {{ console.log(e); }}
-                            this.loading = false;
-                        }}
-                    }},
-                    
-                    parseCSV(str) {{
-                        const rows = str.split('\\n').slice(1);
-                        return rows.map(row => {{
-                            const c = row.split(','); // Simple parser
-                            if(c.length < 3) return null;
-                            return {{ name: c[0], price: c[1], desc: c[2], img: c[3] || 'https://via.placeholder.com/300' }};
-                        }}).filter(Boolean);
-                    }},
-
-                    addToCart(item) {{
-                        this.cart.push(item);
-                        localStorage.setItem('titan_cart', JSON.stringify(this.cart));
-                        alert('Added to Cart');
-                    }},
-                    
-                    checkout() {{
-                        let msg = "Order Inquiry:\\n";
-                        this.cart.forEach(i => msg += i.name + " (" + i.price + ")\\n");
-                        window.open('https://wa.me/{self.d['contact']['wa']}?text=' + encodeURIComponent(msg));
-                    }}
-                }}
+        const CONFIG = {{
+            store: "{c['data_store']}",
+            blog: "{c['data_blog']}",
+            wa: "{c['wa_num']}"
+        }};
+        
+        // --- CSV PARSER (The Engine) ---
+        function parseCSV(str) {{
+            const arr = [];
+            let quote = false;  // 'true' means we're inside a quoted field
+            for (let row = 0, col = 0, c = 0; c < str.length; c++) {{
+                let cc = str[c], nc = str[c+1];
+                arr[row] = arr[row] || []; arr[row][col] = arr[row][col] || '';
+                if (cc == '"' && quote && nc == '"') {{ arr[row][col] += cc; ++c; continue; }}
+                if (cc == '"') {{ quote = !quote; continue; }}
+                if (cc == ',' && !quote) {{ ++col; continue; }}
+                if (cc == '\\r' && nc == '\\n' && !quote) {{ ++row; col = 0; ++c; continue; }}
+                if (cc == '\\n' && !quote) {{ ++row; col = 0; continue; }}
+                if (cc == '\\r' && !quote) {{ ++row; col = 0; continue; }}
+                arr[row][col] += cc;
             }}
-        </script>
+            return arr;
+        }}
+
+        // --- STORE LOGIC ---
+        async function loadStore() {{
+            const el = document.getElementById('store-grid');
+            if(!el || !CONFIG.store) return;
+            try {{
+                const res = await fetch(CONFIG.store);
+                const txt = await res.text();
+                const rows = parseCSV(txt).slice(1); // Skip header
+                el.innerHTML = rows.map(r => {{
+                    if(r.length < 3) return '';
+                    let imgs = r[3] ? r[3].split('|') : ['https://via.placeholder.com/400'];
+                    return `
+                    <div class="card reveal">
+                        <img src="${{imgs[0]}}" class="prod-img" loading="lazy">
+                        <h3>${{r[0]}}</h3>
+                        <div style="color:var(--s); font-weight:bold; margin-bottom:0.5rem">${{r[1]}}</div>
+                        <p>${{r[2].substring(0,80)}}...</p>
+                        <div style="margin-top:auto; display:flex; gap:10px;">
+                            <button onclick="addToCart('${{r[0]}}', '${{r[1]}}')" class="btn btn-primary" style="flex:1">Add</button>
+                            <a href="product.html?id=${{encodeURIComponent(r[0])}}" class="btn btn-accent">View</a>
+                        </div>
+                    </div>`;
+                }}).join('');
+                triggerAnim();
+            }} catch(e) {{ el.innerHTML = "Error loading store."; console.error(e); }}
+        }}
+
+        // --- BLOG LOGIC ---
+        async function loadBlog() {{
+            const el = document.getElementById('blog-grid');
+            if(!el || !CONFIG.blog) return;
+            try {{
+                const res = await fetch(CONFIG.blog);
+                const txt = await res.text();
+                const rows = parseCSV(txt).slice(1);
+                el.innerHTML = rows.map(r => {{
+                    if(r.length < 4) return '';
+                    return `
+                    <div class="card reveal">
+                        <img src="${{r[5] || 'https://via.placeholder.com/800x400'}}" class="prod-img" style="height:200px">
+                        <span style="background:var(--s); color:white; padding:2px 10px; border-radius:20px; width:fit-content; font-size:0.8rem">${{r[3]}}</span>
+                        <h3 style="margin-top:10px">${{r[1]}}</h3>
+                        <p>${{r[4]}}</p>
+                        <a href="post.html?id=${{r[0]}}" class="btn btn-primary" style="margin-top:auto">Read Article</a>
+                    </div>`;
+                }}).join('');
+                triggerAnim();
+            }} catch(e) {{ console.error(e); }}
+        }}
+
+        // --- CART LOGIC ---
+        let cart = JSON.parse(localStorage.getItem('titan_cart')) || [];
+        function addToCart(n, p) {{ 
+            cart.push({{name:n, price:p}}); 
+            localStorage.setItem('titan_cart', JSON.stringify(cart));
+            updateCartUI();
+            alert(n + " added!");
+        }}
+        function updateCartUI() {{
+            const count = document.getElementById('cart-count');
+            if(count) count.innerText = cart.length;
+        }}
+        function checkout() {{
+            let msg = "Order Inquiry:%0A";
+            cart.forEach(i => msg += `- ${{i.name}} (${{i.price}})%0A`);
+            window.open(`https://wa.me/${{CONFIG.wa}}?text=${{msg}}`, '_blank');
+            cart = []; localStorage.setItem('titan_cart', '[]'); updateCartUI();
+        }}
+
+        // --- ANIMATIONS ---
+        function triggerAnim() {{
+            const observer = new IntersectionObserver((entries) => {{
+                entries.forEach(entry => {{
+                    if (entry.isIntersecting) entry.target.classList.add('active');
+                }});
+            }});
+            document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+        }}
+        
+        window.addEventListener('load', () => {{
+            loadStore();
+            loadBlog();
+            updateCartUI();
+            triggerAnim();
+        }});
         """
 
-    def generate_html(self):
-        # SINGLE FILE COMPONENT ASSEMBLY
+# ==========================================
+# 🧱 TITAN CORE: PAGE BUILDER
+# ==========================================
+
+class PageBuilder:
+    def __init__(self, config):
+        self.c = config
+        self.css = AssetGenerator.get_css(config)
+        self.js = AssetGenerator.get_js(config)
+
+    def _nav(self):
+        blog_link = '<a href="blog.html">Blog</a>' if self.c['data_blog'] else ''
+        store_link = '<a href="index.html#store">Store</a>' if self.c['data_store'] else ''
+        return f"""
+        <nav><div class="container nav-inner">
+            <a href="index.html" style="font-size:1.5rem; font-weight:900; text-decoration:none; color:var(--p)">{self.c['biz_name']}</a>
+            <div class="nav-links">
+                <a href="index.html">Home</a>
+                {store_link}
+                {blog_link}
+                <a href="contact.html">Contact</a>
+                <a href="#" onclick="document.getElementById('cart-modal').style.display='flex'">Cart (<span id="cart-count">0</span>)</a>
+            </div>
+        </div></nav>
+        """
+
+    def _footer(self):
+        return f"""
+        <footer style="background:var(--p); color:white; padding:3rem 0; margin-top:auto">
+            <div class="container" style="text-align:center">
+                <h3>{self.c['biz_name']}</h3>
+                <p>Powered by Titan Engine v2050</p>
+                <div style="margin-top:1rem; opacity:0.7">
+                    <a href="privacy.html" style="color:white; margin:0 10px">Privacy</a>
+                    <a href="terms.html" style="color:white; margin:0 10px">Terms</a>
+                </div>
+            </div>
+        </footer>
+        """
+
+    def _cart_modal(self):
+        return """
+        <div id="cart-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:2000; align-items:center; justify-content:center;">
+            <div style="background:white; padding:2rem; border-radius:12px; width:90%; max-width:500px; color:#333">
+                <h2>Your Cart</h2>
+                <p>Ready to checkout?</p>
+                <div style="margin-top:2rem; display:flex; gap:10px">
+                    <button onclick="checkout()" class="btn btn-accent" style="flex:1">Checkout WhatsApp</button>
+                    <button onclick="document.getElementById('cart-modal').style.display='none'" class="btn" style="border:1px solid #ccc">Close</button>
+                </div>
+            </div>
+        </div>
+        """
+
+    def render_page(self, title, content, extra_head=""):
         return f"""
         <!DOCTYPE html>
         <html lang="en">
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>{self.d['brand']}</title>
-            <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700;900&display=swap" rel="stylesheet">
-            {self._get_tailwind_config()}
-            {self._get_alpine_logic()}
+            <title>{title} | {self.c['biz_name']}</title>
+            <link href="https://fonts.googleapis.com/css2?family={self.c['font_head'].replace(' ','+')}:wght@700;900&family={self.c['font_body'].replace(' ','+')}:wght@300;400;600&display=swap" rel="stylesheet">
+            {extra_head}
+            <style>{self.css}</style>
         </head>
-        <body x-data="app()" class="antialiased selection:bg-accent selection:text-white">
-            
-            <!-- NAVBAR -->
-            <nav class="fixed w-full z-50 glass">
-                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div class="flex items-center justify-between h-16">
-                        <div class="text-2xl font-black tracking-tighter cursor-pointer" @click="view = 'home'">
-                            {self.d['brand']}
-                        </div>
-                        <div class="hidden md:block">
-                            <div class="ml-10 flex items-baseline space-x-4">
-                                <button @click="view = 'home'" class="hover:text-brand px-3 py-2 rounded-md text-sm font-medium">Home</button>
-                                <button @click="view = 'store'" class="hover:text-brand px-3 py-2 rounded-md text-sm font-medium">Store</button>
-                                <button @click="view = 'cart'" class="bg-brand hover:bg-opacity-80 px-4 py-2 rounded-full text-white font-bold transition">
-                                    Cart (<span x-text="cart.length"></span>)
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </nav>
-
-            <!-- VIEW: HOME -->
-            <div x-show="view === 'home'" x-transition.opacity class="pt-16">
-                <!-- HERO -->
-                <div class="relative overflow-hidden">
-                    <div class="max-w-7xl mx-auto">
-                        <div class="relative z-10 pb-8 sm:pb-16 md:pb-20 lg:max-w-2xl lg:w-full lg:pb-28 xl:pb-32 pt-20 px-4">
-                            <h1 class="text-4xl tracking-tight font-extrabold sm:text-5xl md:text-6xl">
-                                <span class="block">{self.d['hero']['title']}</span>
-                                <span class="block gradient-text">{self.d['brand']}</span>
-                            </h1>
-                            <p class="mt-3 text-base text-gray-400 sm:mt-5 sm:text-lg sm:max-w-xl sm:mx-auto md:mt-5 md:text-xl lg:mx-0">
-                                {self.d['hero']['sub']}
-                            </p>
-                            <div class="mt-5 sm:mt-8 sm:flex sm:justify-center lg:justify-start">
-                                <div class="rounded-md shadow">
-                                    <button @click="view = 'store'" class="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-brand hover:bg-accent transition md:py-4 md:text-lg">
-                                        Launch Store
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="lg:absolute lg:inset-y-0 lg:right-0 lg:w-1/2">
-                        <img class="h-56 w-full object-cover sm:h-72 md:h-96 lg:w-full lg:h-full opacity-80" src="{self.d['hero']['img']}" alt="">
-                    </div>
-                </div>
-
-                <!-- FEATURES -->
-                <div class="py-12 glass mt-10">
-                    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                        <div class="grid grid-cols-1 gap-8 sm:grid-cols-3">
-                            {''.join([f'''
-                            <div class="pt-6">
-                                <div class="flow-root glass rounded-lg px-6 pb-8">
-                                    <div class="-mt-6">
-                                        <div class="inline-flex items-center justify-center p-3 bg-brand rounded-md shadow-lg text-3xl">
-                                            {f['icon']}
-                                        </div>
-                                        <h3 class="mt-8 text-lg font-medium tracking-tight">{f['title']}</h3>
-                                        <p class="mt-5 text-base text-gray-400">{f['desc']}</p>
-                                    </div>
-                                </div>
-                            </div>
-                            ''' for f in self.d['features']])}
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- VIEW: STORE -->
-            <div x-show="view === 'store'" x-transition.opacity class="pt-24 min-h-screen px-4">
-                <div class="max-w-7xl mx-auto">
-                    <h2 class="text-3xl font-extrabold mb-8 gradient-text">Live Inventory</h2>
-                    
-                    <div x-show="loading" class="text-center py-20 animate-pulse">
-                        Connecting to Satellite Stream...
-                    </div>
-
-                    <div x-show="!loading && products.length === 0" class="text-center py-10 border border-dashed border-gray-700 rounded-lg">
-                        <p>No inventory found. Check CSV Connection.</p>
-                        <p class="text-sm text-gray-500 mt-2">Example: name,price,description,image_url</p>
-                    </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <template x-for="product in products">
-                            <div class="glass rounded-xl overflow-hidden hover:border-brand transition duration-300">
-                                <img :src="product.img" class="h-48 w-full object-cover">
-                                <div class="p-6">
-                                    <div class="flex justify-between items-baseline">
-                                        <h3 class="text-xl font-bold" x-text="product.name"></h3>
-                                        <span class="text-brand font-mono text-lg" x-text="product.price"></span>
-                                    </div>
-                                    <p class="mt-2 text-gray-400 text-sm h-12 overflow-hidden" x-text="product.desc"></p>
-                                    <button @click="addToCart(product)" class="mt-4 w-full bg-white bg-opacity-10 hover:bg-brand text-white font-bold py-2 rounded transition">
-                                        Add to Cart
-                                    </button>
-                                </div>
-                            </div>
-                        </template>
-                    </div>
-                </div>
-            </div>
-
-            <!-- VIEW: CART -->
-            <div x-show="view === 'cart'" x-transition.opacity class="pt-24 min-h-screen px-4">
-                <div class="max-w-3xl mx-auto glass rounded-xl p-8">
-                    <h2 class="text-3xl font-bold mb-6">Your Cart</h2>
-                    <template x-for="(item, index) in cart">
-                        <div class="flex justify-between items-center border-b border-gray-700 py-4">
-                            <div>
-                                <h4 class="font-bold" x-text="item.name"></h4>
-                                <p class="text-sm text-gray-400" x-text="item.price"></p>
-                            </div>
-                            <button @click="cart.splice(index, 1); localStorage.setItem('titan_cart', JSON.stringify(cart))" class="text-red-500 hover:text-red-400">Remove</button>
-                        </div>
-                    </template>
-                    <div class="mt-8 pt-4 border-t border-gray-600">
-                        <button @click="checkout()" class="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-4 rounded-lg shadow-lg transform hover:-translate-y-1 transition">
-                            Checkout via WhatsApp
-                        </button>
-                    </div>
-                </div>
-            </div>
-
+        <body style="min-height:100vh; display:flex; flex-direction:column;">
+            {self._nav()}
+            {content}
+            {self._footer()}
+            {self._cart_modal()}
+            <script>{self.js}</script>
         </body>
         </html>
         """
 
-# --- 3. UI DASHBOARD ---
+# ==========================================
+# 🖥️ STREAMLIT UI (CONTROL PANEL)
+# ==========================================
+
+st.title("🏗️ Titan Engine: Infinity Architect")
+st.markdown("Generates **Multi-Page**, **Dynamic-Data**, **Static-Hosted** websites ready for 2050.")
+
 with st.sidebar:
-    st.title("Titan 2050")
-    st.markdown("---")
+    st.header("Global Settings")
+    st.session_state.config['biz_name'] = st.text_input("Business Name", st.session_state.config['biz_name'])
+    st.session_state.config['wa_num'] = st.text_input("WhatsApp Number", st.session_state.config['wa_num'])
     
-    with st.expander("🎨 Global Design", expanded=True):
-        st.session_state.site_data['brand'] = st.text_input("Brand Name", st.session_state.site_data['brand'])
-        c1, c2 = st.columns(2)
-        st.session_state.site_data['colors']['primary'] = c1.color_picker("Brand Color", st.session_state.site_data['colors']['primary'])
-        st.session_state.site_data['colors']['secondary'] = c2.color_picker("Accent Color", st.session_state.site_data['colors']['secondary'])
-        st.session_state.site_data['colors']['bg'] = c1.color_picker("Background", st.session_state.site_data['colors']['bg'])
-        st.session_state.site_data['colors']['text'] = c2.color_picker("Text Color", st.session_state.site_data['colors']['text'])
+    st.header("🎨 Visual DNA")
+    c1, c2 = st.columns(2)
+    st.session_state.config['primary_col'] = c1.color_picker("Primary", st.session_state.config['primary_col'])
+    st.session_state.config['accent_col'] = c2.color_picker("Accent", st.session_state.config['accent_col'])
+    
+    st.header("🔌 Dynamic Feeds")
+    st.session_state.config['data_store'] = st.text_input("Store CSV URL")
+    st.session_state.config['data_blog'] = st.text_input("Blog CSV URL")
 
-    with st.expander("🔌 Dynamic Data"):
-        st.info("Paste your published Google Sheet CSV link here.")
-        st.session_state.site_data['data_sources']['store_csv'] = st.text_input("Store CSV URL", st.session_state.site_data['data_sources']['store_csv'])
-        st.session_state.site_data['contact']['wa'] = st.text_input("WhatsApp Number", st.session_state.site_data['contact']['wa'])
-
-# --- 4. MAIN WORKSPACE ---
-st.title("🚀 StopWebRent: Construct Mode")
-
-tabs = st.tabs(["Hero Section", "Features", "Preview & Export"])
+# --- MAIN EDITOR ---
+tabs = st.tabs(["Hero & Home", "About & Features", "Booking & Contact", "Review & Export"])
 
 with tabs[0]:
-    c1, c2 = st.columns([2, 1])
-    with c1:
-        st.session_state.site_data['hero']['title'] = st.text_input("Hero Title", st.session_state.site_data['hero']['title'])
-        st.session_state.site_data['hero']['sub'] = st.text_area("Hero Subtitle", st.session_state.site_data['hero']['sub'])
-    with c2:
-        st.session_state.site_data['hero']['img'] = st.text_input("Background Image", st.session_state.site_data['hero']['img'])
-        st.caption("Use Unsplash URL for best results")
+    st.subheader("Hero Section")
+    h_title = st.text_input("Hero Title", "Stop Paying Rent.")
+    h_sub = st.text_area("Hero Subtext", "The future is static. Own your code.")
+    h_img = st.text_input("Hero Image URL", "https://images.unsplash.com/photo-1600607686527-6fb886090705?q=80&w=1600")
+    
+    home_content = f"""
+    <section style="background:linear-gradient(rgba(0,0,0,0.5),rgba(0,0,0,0.5)), url('{h_img}'); background-size:cover; height:80vh; display:flex; align-items:center; color:white; text-align:center;">
+        <div class="container reveal">
+            <h1 style="font-size:clamp(3rem, 5vw, 5rem); color:white; margin-bottom:1rem">{h_title}</h1>
+            <p style="font-size:1.5rem; margin-bottom:2rem; opacity:0.9">{h_sub}</p>
+            <a href="#store" class="btn btn-accent">Explore Now</a>
+        </div>
+    </section>
+    
+    <section id="store">
+        <div class="container">
+            <h2 style="text-align:center; font-size:2.5rem; margin-bottom:3rem">Latest Drops</h2>
+            <div id="store-grid" class="grid-3">
+                <div style="text-align:center; grid-column:1/-1; padding:3rem">
+                    { "Loading Dynamic Data from Edge..." if st.session_state.config['data_store'] else "Connect a Google Sheet to see products." }
+                </div>
+            </div>
+        </div>
+    </section>
+    """
 
 with tabs[1]:
-    st.markdown("### The Three Pillars")
+    st.subheader("About Content")
+    about_txt = st.text_area("About Us Text", "We are building the future of web architecture.")
+    about_img = st.text_input("About Image", "https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=1600")
+    
+    about_content = f"""
+    <section>
+        <div class="container grid-3" style="grid-template-columns: 1fr 1fr; align-items:center">
+            <div class="reveal">
+                <h1>About Us</h1>
+                <p style="font-size:1.1rem">{about_txt}</p>
+            </div>
+            <img src="{about_img}" class="reveal" style="width:100%; border-radius:12px;">
+        </div>
+    </section>
+    """
+    
+    st.subheader("Features")
+    feat_html = ""
     for i in range(3):
-        c1, c2, c3 = st.columns([1, 2, 3])
-        st.session_state.site_data['features'][i]['icon'] = c1.text_input(f"Icon {i+1}", st.session_state.site_data['features'][i]['icon'])
-        st.session_state.site_data['features'][i]['title'] = c2.text_input(f"Title {i+1}", st.session_state.site_data['features'][i]['title'])
-        st.session_state.site_data['features'][i]['desc'] = c3.text_input(f"Desc {i+1}", st.session_state.site_data['features'][i]['desc'])
+        c1, c2 = st.columns(2)
+        ft = c1.text_input(f"Feature {i+1} Title", f"Feature {i+1}")
+        fd = c2.text_input(f"Feature {i+1} Desc", "Description here")
+        feat_html += f'<div class="card reveal"><h3>{ft}</h3><p>{fd}</p></div>'
+    
+    home_content += f'<section style="background:var(--surface)"><div class="container"><h2 style="text-align:center">Why Us</h2><div class="grid-3">{feat_html}</div></div></section>'
 
 with tabs[2]:
-    # GENERATION LOGIC
-    engine = TitanEngine(st.session_state.site_data)
-    html_output = engine.generate_html()
+    st.subheader("Booking Embed")
+    booking_code = st.text_area("Calendly/Booking Embed Code", "<!-- Paste Calendly -->")
     
-    col_a, col_b = st.columns([3, 1])
-    with col_a:
-        st.subheader("Live Quantum Preview")
-        st.components.v1.html(html_output, height=600, scrolling=True)
+    contact_content = f"""
+    <section>
+        <div class="container" style="text-align:center; max-width:800px">
+            <h1>Contact Us</h1>
+            <div class="card reveal" style="text-align:left; margin-top:2rem">
+                <h3>Get in Touch</h3>
+                <p>Email: hello@{st.session_state.config['biz_name'].replace(' ','').lower()}.com</p>
+                <p>WhatsApp: {st.session_state.config['wa_num']}</p>
+                <a href="https://wa.me/{st.session_state.config['wa_num']}" class="btn btn-accent" style="margin-top:1rem; width:100%; text-align:center">Chat Now</a>
+            </div>
+            <div style="margin-top:4rem">
+                <h2>Book a Call</h2>
+                {booking_code}
+            </div>
+        </div>
+    </section>
+    """
+
+with tabs[3]:
+    st.success("Configuration Complete. Ready to compile.")
     
-    with col_b:
-        st.subheader("Deploy")
-        st.success("System Optimized.")
+    if st.button("🚀 BUILD & DOWNLOAD WEBSITE", type="primary"):
+        # Instantiate Builder
+        builder = PageBuilder(st.session_state.config)
         
-        # Zip Logic
+        # 1. Build Pages
+        pg_home = builder.render_page("Home", home_content)
+        pg_contact = builder.render_page("Contact", contact_content)
+        pg_about = builder.render_page("About", about_content)
+        pg_terms = builder.render_page("Terms", "<div class='container'><br><h1>Terms</h1><p>Standard terms apply.</p></div>")
+        pg_privacy = builder.render_page("Privacy", "<div class='container'><br><h1>Privacy</h1><p>We value your privacy.</p></div>")
+        
+        # 2. Build Blog Index & Dynamic Post Page
+        pg_blog = builder.render_page("Blog", """
+            <section><div class="container">
+                <h1 style="text-align:center">Our Blog</h1>
+                <div id="blog-grid" class="grid-3" style="margin-top:3rem">Loading...</div>
+            </div></section>
+        """)
+        
+        # DYNAMIC PRODUCT DETAIL PAGE (JS handles the hydration)
+        pg_product = builder.render_page("Product", """
+            <section><div class="container" id="prod-container">
+                <a href="index.html#store" class="btn">&larr; Back</a>
+                <div class="grid-3" style="margin-top:2rem; grid-template-columns:1fr 1fr;">
+                    <img id="p-img" style="width:100%; border-radius:12px;">
+                    <div>
+                        <h1 id="p-title">Loading...</h1>
+                        <h2 id="p-price" style="color:var(--s)"></h2>
+                        <p id="p-desc"></p>
+                        <button id="p-btn" class="btn btn-primary">Add to Cart</button>
+                    </div>
+                </div>
+            </div></section>
+            <script>
+            async function loadP() {
+                const params = new URLSearchParams(window.location.search);
+                const id = params.get('id');
+                const res = await fetch(CONFIG.store);
+                const txt = await res.text();
+                const rows = parseCSV(txt);
+                const p = rows.find(r => r[0] == id);
+                if(p) {
+                    let imgs = p[3] ? p[3].split('|') : [''];
+                    document.getElementById('p-img').src = imgs[0];
+                    document.getElementById('p-title').innerText = p[0];
+                    document.getElementById('p-price').innerText = p[1];
+                    document.getElementById('p-desc').innerText = p[2];
+                    document.getElementById('p-btn').onclick = () => addToCart(p[0], p[1]);
+                }
+            }
+            loadP();
+            </script>
+        """)
+
+        # DYNAMIC BLOG POST PAGE
+        pg_post = builder.render_page("Article", """
+            <section><div class="container" style="max-width:800px">
+                <a href="blog.html" class="btn">&larr; Back</a>
+                <img id="b-img" style="width:100%; height:400px; object-fit:cover; border-radius:12px; margin-top:2rem">
+                <h1 id="b-title" style="font-size:3rem; line-height:1.1; margin-top:1rem">Loading...</h1>
+                <div id="b-body" style="font-size:1.2rem; line-height:1.8; color:#555"></div>
+            </div></section>
+            <script>
+            async function loadB() {
+                const params = new URLSearchParams(window.location.search);
+                const id = params.get('id');
+                const res = await fetch(CONFIG.blog);
+                const txt = await res.text();
+                const rows = parseCSV(txt);
+                const p = rows.find(r => r[0] == id);
+                if(p) {
+                    document.getElementById('b-img').src = p[5];
+                    document.getElementById('b-title').innerText = p[1];
+                    document.getElementById('b-body').innerHTML = p[6] ? p[6].replace(/\\n/g, '<br>') : '';
+                }
+            }
+            loadB();
+            </script>
+        """)
+
+        # 3. Zip It
         zip_buffer = io.BytesIO()
         with zipfile.ZipFile(zip_buffer, "a", zipfile.ZIP_DEFLATED, False) as zf:
-            zf.writestr("index.html", html_output)
-            zf.writestr("README.txt", "Titan 2050 Build.\nUpload index.html to Netlify/Vercel/GitHub Pages.")
-        
+            zf.writestr("index.html", pg_home)
+            zf.writestr("contact.html", pg_contact)
+            zf.writestr("about.html", pg_about)
+            zf.writestr("blog.html", pg_blog)
+            zf.writestr("product.html", pg_product)
+            zf.writestr("post.html", pg_post)
+            zf.writestr("terms.html", pg_terms)
+            zf.writestr("privacy.html", pg_privacy)
+            
+            # PWA Manifest
+            zf.writestr("manifest.json", json.dumps({
+                "name": st.session_state.config['biz_name'],
+                "start_url": "index.html",
+                "display": "standalone",
+                "theme_color": st.session_state.config['primary_col']
+            }))
+
         st.download_button(
-            label="Download Application",
+            label="📥 DOWNLOAD 2050 SITE PACKAGE",
             data=zip_buffer.getvalue(),
-            file_name="titan_2050_build.zip",
+            file_name="titan_infinity_build.zip",
             mime="application/zip",
             type="primary"
         )
+        
+        st.subheader("Preview")
+        st.components.v1.html(pg_home, height=600, scrolling=True)
