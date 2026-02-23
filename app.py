@@ -2,383 +2,536 @@ import streamlit as st
 import zipfile
 import io
 import json
-import datetime
 import re
-import requests
 
-# --- 0. STATE MANAGEMENT ---
-def init_state(key, default_val):
-    if key not in st.session_state:
-        st.session_state[key] = default_val
+# --- TITAN ENGINE CONFIGURATION ---
+VERSION = "v50.0.0-Phoenix"
 
-init_state('hero_h', "Stop Paying Rent for Your Website.")
-init_state('hero_sub', "The Titan Engine is the world’s first 0.1s website architecture that runs on $0 monthly fees. Pay once. Own it forever.")
-init_state('about_h', "Control Your Empire from a Spreadsheet")
-init_state('about_short', "No WordPress dashboard. No plugins to update. Just open your private Google Sheet, change a text, and watch your site update globally in seconds.")
-init_state('feat_data', "bolt | The Performance Pillar | **0.1s High-Velocity Loading**. While traditional sites take 3–5s, Titan loads instantly.\nwallet | The Economic Pillar | **$0 Monthly Fees**. We eliminated hosting subscriptions.\ntable | The Functional Pillar | **Google Sheets CMS**. Update prices and photos directly from a simple spreadsheet.\nshield | The Authority Pillar | **Unhackable Security**. Zero-DB Architecture removes the hacker's primary entry point.\nlayers | The Reliability Pillar | **Global Edge Deployment**. Distributed across 100+ servers worldwide.\nstar | The Conversion Pillar | **One-Tap WhatsApp**. Direct-to-Chat technology.")
+st.set_page_config(
+    page_title=f"Titan Engine {VERSION}",
+    layout="wide",
+    page_icon="⚡",
+    initial_sidebar_state="expanded"
+)
 
-# --- 1. APP CONFIGURATION ---
-st.set_page_config(page_title="Titan v38.0 | Performance Upgrade", layout="wide", page_icon="⚡", initial_sidebar_state="expanded")
+# --- 1. CORE GENERATORS (JAVASCRIPT RUNTIME) ---
+# This JS Engine is injected into the HTML. It handles Routing, Data Fetching, and UI Rendering on the client side.
+TITAN_JS_CORE = """
+<script>
+/** 
+ * TITAN CLIENT ENGINE v50 
+ * 2050 Architecture: Zero-DB, Edge-Computed, CSV-Hydrated
+ */
 
-# --- 2. ADVANCED UI SYSTEM ---
-st.markdown("""
-    <style>
-    :root { --primary: #0f172a; --accent: #ef4444; }
-    .stApp { background-color: #f8fafc; color: #1e293b; font-family: 'Inter', sans-serif; }
-    [data-testid="stSidebar"] { background-color: #ffffff; border-right: 1px solid #e2e8f0; }
-    [data-testid="stSidebar"] h1 { background: linear-gradient(90deg, #0f172a, #ef4444); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 900 !important; font-size: 1.8rem !important; }
-    .stTextInput input, .stTextArea textarea, .stSelectbox div[data-baseweb="select"] { background-color: #ffffff !important; border: 1px solid #cbd5e1 !important; border-radius: 8px !important; color: #0f172a !important; }
-    .stButton>button { width: 100%; border-radius: 8px; height: 3.5rem; background: linear-gradient(135deg, #0f172a 0%, #334155 100%); color: white; font-weight: 800; border: none; box-shadow: 0 4px 15px rgba(15, 23, 42, 0.3); text-transform: uppercase; letter-spacing: 1px; transition: transform 0.2s; }
-    .stButton>button:hover { transform: translateY(-2px); }
-    </style>
-    """, unsafe_allow_html=True)
+const STATE = {
+    cart: JSON.parse(localStorage.getItem('titanCart')) || [],
+    products: [],
+    posts: [],
+    config: {},
+    route: 'home'
+};
 
-# --- 3. SIDEBAR ---
-with st.sidebar:
-    st.title("Titan Architect")
-    st.caption("v38.0 | Core Web Vitals Update")
-    st.divider()
+// --- ROUTER ---
+function router() {
+    const hash = window.location.hash.slice(1) || 'home';
+    STATE.route = hash;
+    document.querySelectorAll('.view-section').forEach(el => el.style.display = 'none');
+    document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
     
-    with st.expander("🤖 Titan AI Generator", expanded=False):
-        raw_key = st.text_input("Groq API Key", type="password")
-        groq_key = raw_key.strip() if raw_key else ""
-        biz_desc = st.text_input("Business Description")
-        if st.button("✨ Generate Copy"):
-            if not groq_key or not biz_desc: st.error("Key & Description required.")
-            else:
-                try:
-                    with st.spinner("Writing..."):
-                        url = "https://api.groq.com/openai/v1/chat/completions"
-                        headers = {"Authorization": f"Bearer {groq_key}", "Content-Type": "application/json"}
-                        prompt = f"Act as a copywriter. Return JSON for '{biz_desc}': hero_h, hero_sub, about_h, about_short, feat_data (icon|Title|Desc format)."
-                        data = {"messages": [{"role": "user", "content": prompt}], "model": "llama-3.1-8b-instant", "response_format": {"type": "json_object"}}
-                        resp = requests.post(url, headers=headers, json=data)
-                        if resp.status_code == 200:
-                            res = json.loads(resp.json()['choices'][0]['message']['content'])
-                            if 'hero_h' in res: st.session_state.hero_h = str(res['hero_h'])
-                            if 'hero_sub' in res: st.session_state.hero_sub = str(res['hero_sub'])
-                            if 'about_h' in res: st.session_state.about_h = str(res['about_h'])
-                            if 'about_short' in res: st.session_state.about_short = str(res['about_short'])
-                            if 'feat_data' in res: st.session_state.feat_data = "\n".join(map(str, res['feat_data'])) if isinstance(res['feat_data'], list) else str(res['feat_data'])
-                            st.success("Generated!"); st.rerun()
-                except Exception as e: st.error(f"Error: {e}")
+    // Handle Specific Routes
+    if (hash.startsWith('product/')) {
+        renderProductDetail(hash.split('/')[1]);
+        document.getElementById('view-product-detail').style.display = 'block';
+    } else if (hash.startsWith('post/')) {
+        renderPostDetail(hash.split('/')[1]);
+        document.getElementById('view-post-detail').style.display = 'block';
+    } else {
+        const view = document.getElementById('view-' + hash);
+        if (view) {
+            view.style.display = 'block';
+            if (hash === 'store') renderStore();
+            if (hash === 'blog') renderBlog();
+        } else {
+            document.getElementById('view-home').style.display = 'block';
+        }
+    }
+    window.scrollTo(0,0);
+}
+window.addEventListener('hashchange', router);
+window.addEventListener('load', () => { init(); router(); });
 
-    with st.expander("🎨 Design Studio", expanded=True):
-        theme_mode = st.selectbox("Base Theme", ["Clean Corporate (Light)", "Midnight SaaS (Dark)", "Glassmorphism (Blur)", "Cyberpunk Neon", "Luxury Gold", "Forest Eco", "Ocean Breeze", "Stark Minimalist"])
-        c1, c2 = st.columns(2)
-        p_color = c1.color_picker("Primary Brand", "#0F172A") 
-        s_color = c2.color_picker("Action (CTA)", "#EF4444")  
-        hero_layout = st.selectbox("Hero Alignment", ["Center", "Left"])
-        btn_style = st.selectbox("Button Style", ["Rounded (Default)", "Sharp (Square)", "Pill (Full Round)"])
-        border_rad = "0px" if btn_style == "Sharp (Square)" else "50px" if btn_style == "Pill (Full Round)" else "8px"
-        anim_type = st.selectbox("Animation Style", ["Fade Up", "Zoom In", "Slide Right", "None"])
-        h_font = st.selectbox("Headings Font", ["Montserrat", "Space Grotesk", "Playfair Display", "Oswald", "Clash Display"])
-        b_font = st.selectbox("Body Font", ["Inter", "Open Sans", "Roboto", "Satoshi", "Lora"])
+// --- DATA LAYER ---
+async function fetchCSV(url) {
+    if(!url) return [];
+    try {
+        const res = await fetch(url);
+        const text = await res.text();
+        const rows = text.split(/\\r\\n|\\n/);
+        return rows.slice(1).map(row => {
+            // Simple CSV parser that respects quotes
+            const regex = /(?:^|,)(?:"([^"]*)"|([^",]*))/g;
+            let match, res = [];
+            while (match = regex.exec(row)) res.push(match[1] || match[2] || "");
+            return res;
+        }).filter(r => r.length > 1);
+    } catch (e) { console.error("Data Fetch Error", e); return []; }
+}
 
-    with st.expander("🧩 Section Manager", expanded=False):
-        show_hero = st.checkbox("Hero Section", value=True)
-        show_stats = st.checkbox("Trust Stats", value=True)
-        show_features = st.checkbox("Feature Grid", value=True)
-        show_pricing = st.checkbox("Pricing Table", value=True)
-        show_inventory = st.checkbox("Store/Inventory", value=True)
-        show_blog = st.checkbox("Blog Engine", value=True)
-        show_gallery = st.checkbox("About Section", value=True)
-        show_testimonials = st.checkbox("Testimonials", value=True)
-        show_faq = st.checkbox("F.A.Q.", value=True)
-        show_cta = st.checkbox("Final CTA", value=True)
-        show_booking = st.checkbox("Booking Engine", value=True)
+async function init() {
+    updateCartCount();
+    // Load Data in Background
+    if(CONFIG.storeUrl) STATE.products = await fetchCSV(CONFIG.storeUrl);
+    if(CONFIG.blogUrl) STATE.posts = await fetchCSV(CONFIG.blogUrl);
+}
 
-    with st.expander("⚙️ SEO & Analytics", expanded=False):
-        seo_area = st.text_input("Service Area", "Global / Online")
-        seo_kw = st.text_area("SEO Keywords", "web design, no monthly fees")
-        ga_tag = st.text_input("Google Analytics ID (G-XXXX)")
-        og_image = st.text_input("Social Share Image URL")
+// --- RENDERERS ---
+function renderStore() {
+    const grid = document.getElementById('store-grid');
+    if(!STATE.products.length) { grid.innerHTML = '<p>Loading Inventory...</p>'; return; }
+    grid.innerHTML = STATE.products.map(p => `
+        <div class="card reveal">
+            <div class="card-img" style="background-image:url('${p[3]?.split('|')[0] || CONFIG.placeholderImg}')"></div>
+            <div class="card-body">
+                <h3>${p[0]}</h3>
+                <div class="price">${p[1]}</div>
+                <p>${p[2].substring(0, 80)}...</p>
+                <button onclick="addToCart('${p[0]}', '${p[1]}')" class="btn btn-sm">Add to Cart</button>
+                <a href="#product/${encodeURIComponent(p[0])}" class="btn btn-sm btn-outline">Details</a>
+            </div>
+        </div>
+    `).join('');
+}
 
-# --- 4. MAIN WORKSPACE ---
-st.title("🏗️ StopWebRent Site Builder v38.0")
-tabs = st.tabs(["1. Identity & PWA", "2. Content Blocks", "3. Marketing Tools", "4. Pricing", "5. Store", "6. Booking", "7. Blog", "8. Legal"])
+function renderBlog() {
+    const grid = document.getElementById('blog-grid');
+    if(!STATE.posts.length) { grid.innerHTML = '<p>Loading Articles...</p>'; return; }
+    grid.innerHTML = STATE.posts.map(p => `
+        <div class="card reveal horizontal">
+            <div class="card-img" style="width:150px; background-image:url('${p[5] || CONFIG.placeholderImg}')"></div>
+            <div class="card-body">
+                <span class="badge">${p[3]}</span>
+                <h3>${p[1]}</h3>
+                <p>${p[4]}</p>
+                <a href="#post/${p[0]}" class="read-more">Read Article &rarr;</a>
+            </div>
+        </div>
+    `).join('');
+}
+
+function renderProductDetail(name) {
+    const decoded = decodeURIComponent(name);
+    const p = STATE.products.find(x => x[0] === decoded);
+    if(!p) return;
+    const imgs = p[3] ? p[3].split('|') : [CONFIG.placeholderImg];
+    document.getElementById('pd-img').src = imgs[0];
+    document.getElementById('pd-title').innerText = p[0];
+    document.getElementById('pd-price').innerText = p[1];
+    document.getElementById('pd-desc').innerText = p[2];
+    // Setup Add to Cart Button
+    const btn = document.getElementById('pd-add');
+    btn.onclick = () => addToCart(p[0], p[1]);
+}
+
+function renderPostDetail(id) {
+    const p = STATE.posts.find(x => x[0] === id);
+    if(!p) return;
+    document.getElementById('bp-img').src = p[5] || CONFIG.placeholderImg;
+    document.getElementById('bp-title').innerText = p[1];
+    document.getElementById('bp-content').innerHTML = p[6].replace(/\\n/g, '<br>');
+}
+
+// --- CART SYSTEM ---
+function addToCart(name, price) {
+    STATE.cart.push({name, price});
+    localStorage.setItem('titanCart', JSON.stringify(STATE.cart));
+    updateCartCount();
+    showToast("Added to Cart");
+}
+
+function updateCartCount() {
+    document.getElementById('cart-count').innerText = STATE.cart.length;
+}
+
+function checkout() {
+    if(STATE.cart.length === 0) return alert("Cart is empty");
+    let msg = "New Order:%0A";
+    let total = 0;
+    STATE.cart.forEach(i => {
+        msg += `- ${i.name} (${i.price})%0A`;
+        total += parseFloat(i.price.replace(/[^0-9.]/g, '')) || 0;
+    });
+    msg += `%0ATotal Value: ${total.toFixed(2)}`;
+    window.open(`https://wa.me/${CONFIG.whatsapp}?text=${msg}`, '_blank');
+    STATE.cart = [];
+    localStorage.setItem('titanCart', JSON.stringify(STATE.cart));
+    updateCartCount();
+    toggleCart();
+}
+
+function toggleCart() {
+    const modal = document.getElementById('cart-modal');
+    modal.style.display = modal.style.display === 'flex' ? 'none' : 'flex';
+    if(modal.style.display === 'flex') {
+        const list = document.getElementById('cart-list');
+        list.innerHTML = STATE.cart.map((i, idx) => `
+            <div class="cart-item">
+                <span>${i.name}</span>
+                <span>${i.price} <b style="color:red;cursor:pointer" onclick="STATE.cart.splice(${idx},1); localStorage.setItem('titanCart', JSON.stringify(STATE.cart)); toggleCart(); toggleCart();">x</b></span>
+            </div>
+        `).join('');
+    }
+}
+
+// --- UI UTILS ---
+function showToast(msg) {
+    const t = document.createElement('div');
+    t.className = 'toast'; t.innerText = msg;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 2000);
+}
+
+// Intersection Observer for Animations
+const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) entry.target.classList.add('active');
+    });
+});
+setTimeout(() => document.querySelectorAll('.reveal').forEach(el => observer.observe(el)), 500);
+
+</script>
+"""
+
+TITAN_CSS = """
+<style>
+:root {
+    --primary: {{P_COLOR}};
+    --accent: {{S_COLOR}};
+    --bg: {{BG_COLOR}};
+    --text: {{TXT_COLOR}};
+    --card: {{CARD_COLOR}};
+    --font-head: '{{FONT_HEAD}}', sans-serif;
+    --font-body: '{{FONT_BODY}}', sans-serif;
+}
+
+/* RESET */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: var(--font-body); line-height: 1.6; overflow-x: hidden; }
+a { text-decoration: none; color: inherit; transition: 0.3s; }
+ul { list-style: none; }
+
+/* LAYOUT */
+.container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+section { padding: 4rem 0; }
+.grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; }
+
+/* TYPOGRAPHY */
+h1, h2, h3, h4 { font-family: var(--font-head); line-height: 1.1; margin-bottom: 1rem; color: var(--primary); }
+h1 { font-size: clamp(2.5rem, 5vw, 4.5rem); }
+h2 { font-size: 2.5rem; text-align: center; margin-bottom: 3rem; }
+
+/* COMPONENTS */
+.btn { display: inline-block; padding: 0.8rem 1.8rem; background: var(--primary); color: white; border-radius: 8px; font-weight: bold; border: none; cursor: pointer; }
+.btn:hover { filter: brightness(1.1); transform: translateY(-2px); }
+.btn-accent { background: var(--accent); }
+.btn-outline { background: transparent; border: 2px solid var(--primary); color: var(--primary); }
+.btn-sm { padding: 0.5rem 1rem; font-size: 0.9rem; }
+
+.card { background: var(--card); border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.05); transition: 0.3s; border: 1px solid rgba(128,128,128,0.1); }
+.card:hover { transform: translateY(-5px); box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
+.card-img { height: 220px; background-size: cover; background-position: center; }
+.card-body { padding: 1.5rem; display: flex; flex-direction: column; gap: 0.5rem; }
+.card.horizontal { display: flex; flex-direction: row; }
+.card.horizontal .card-img { width: 40%; height: auto; }
+
+/* NAVIGATION */
+nav { position: fixed; top: 0; width: 100%; background: rgba(255,255,255,0.9); backdrop-filter: blur(10px); z-index: 1000; border-bottom: 1px solid rgba(0,0,0,0.05); }
+.nav-flex { display: flex; justify-content: space-between; align-items: center; height: 70px; }
+.nav-links { display: flex; gap: 2rem; font-weight: 600; }
+.nav-links a:hover { color: var(--accent); }
+
+/* HERO */
+.hero { min-height: 80vh; display: flex; align-items: center; background-size: cover; background-position: center; position: relative; color: white; }
+.hero-overlay { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.3) 100%); }
+.hero-content { position: relative; z-index: 2; max-width: 600px; }
+
+/* UTILS */
+.reveal { opacity: 0; transform: translateY(30px); transition: 0.8s all ease; }
+.reveal.active { opacity: 1; transform: translateY(0); }
+.badge { background: var(--accent); color: white; padding: 0.2rem 0.6rem; border-radius: 50px; font-size: 0.8rem; width: fit-content; }
+.toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--primary); color: white; padding: 1rem 2rem; border-radius: 50px; z-index: 2000; animation: fadeUp 0.3s; }
+
+/* CART MODAL */
+#cart-float { position: fixed; bottom: 30px; right: 30px; background: var(--accent); color: white; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; cursor: pointer; box-shadow: 0 10px 30px rgba(0,0,0,0.2); z-index: 1001; }
+#cart-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 2000; align-items: center; justify-content: center; }
+.modal-content { background: var(--card); padding: 2rem; border-radius: 12px; width: 90%; max-width: 500px; color: var(--text); }
+
+/* DARK MODE OVERRIDES */
+@media (prefers-color-scheme: dark) {
+    nav { background: rgba(15, 23, 42, 0.9); }
+}
+@media (max-width: 768px) {
+    .nav-links { display: none; } /* Simplified mobile for demo */
+    .hero h1 { font-size: 2.5rem; }
+    .card.horizontal { flex-direction: column; }
+    .card.horizontal .card-img { width: 100%; height: 200px; }
+}
+</style>
+"""
+
+# --- 2. BUILDER UI (STREAMLIT) ---
+
+def init_state(key, val):
+    if key not in st.session_state: st.session_state[key] = val
+
+init_state('biz_name', "Stop Web Rent")
+init_state('hero_h', "Stop Paying Rent for Your Website.")
+init_state('hero_sub', "The Titan Engine is the world’s first 0.1s website architecture that runs on $0 monthly fees.")
+
+with st.sidebar:
+    st.title("Titan Engine 2050")
+    st.caption("v50.0 - Phoenix Edition")
+    
+    st.header("🎨 Visual DNA")
+    # THEME PRESETS
+    theme = st.selectbox("Design Theme", ["Clean Corp", "Dark Mode SaaS", "Cyberpunk", "Luxury Gold"])
+    
+    col_def = {"p": "#0f172a", "s": "#ef4444", "bg": "#ffffff", "txt": "#1e293b", "card": "#ffffff"}
+    if theme == "Dark Mode SaaS": col_def = {"p": "#3b82f6", "s": "#10b981", "bg": "#0f172a", "txt": "#f8fafc", "card": "#1e293b"}
+    elif theme == "Cyberpunk": col_def = {"p": "#d946ef", "s": "#06b6d4", "bg": "#09090b", "txt": "#e4e4e7", "card": "#18181b"}
+    
+    p_color = st.color_picker("Primary", col_def["p"])
+    s_color = st.color_picker("Accent", col_def["s"])
+    bg_color = st.color_picker("Background", col_def["bg"])
+    txt_color = st.color_picker("Text", col_def["txt"])
+    card_color = st.color_picker("Card BG", col_def["card"])
+    
+    h_font = st.selectbox("Header Font", ["Space Grotesk", "Inter", "Playfair Display", "Montserrat"])
+    b_font = st.selectbox("Body Font", ["Inter", "Roboto", "Open Sans", "Lato"])
+
+st.title("🏗️ StopWebRent Site Builder (v50)")
+st.markdown("Generating a **Single Page Application (SPA)** with client-side hydration. No database required.")
+
+tabs = st.tabs(["1. Identity", "2. Content", "3. Store/Blog", "4. Marketing", "5. Booking/Legal"])
 
 with tabs[0]:
     c1, c2 = st.columns(2)
-    with c1:
-        biz_name = st.text_input("Business Name", "StopWebRent.com")
-        biz_tagline = st.text_input("Tagline", "Stop Renting. Start Owning.")
-        biz_phone = st.text_input("Phone", "966572562151")
-        biz_email = st.text_input("Email", "hello@kaydiemscriptlab.com")
-    with c2:
-        prod_url = st.text_input("Website URL", "https://www.stopwebrent.com")
-        biz_addr = st.text_area("Address", "Kaydiem Script Lab\nKolkata, India", height=100)
-        map_iframe = st.text_area("Google Map Embed", placeholder='<iframe src="..."></iframe>', height=100)
-        seo_d = st.text_area("Meta Description", "Stop paying monthly fees for Wix.", height=100)
-        logo_url = st.text_input("Logo URL (PNG/SVG)")
-    st.subheader("📱 Progressive Web App (PWA)")
-    pwa_short = st.text_input("App Short Name", biz_name[:12])
-    pwa_desc = st.text_input("App Description", "Official App")
-    pwa_icon = st.text_input("App Icon (512x512 PNG)", logo_url)
-    st.subheader("🌍 Multi-Language")
-    lang_sheet = st.text_input("Translation Sheet CSV URL")
-    st.subheader("Social Links")
-    sc1, sc2, sc3 = st.columns(3)
-    fb_link = sc1.text_input("Facebook URL")
-    ig_link = sc2.text_input("Instagram URL")
-    x_link = sc3.text_input("X (Twitter) URL")
-    sc4, sc5, sc6 = st.columns(3)
-    li_link = sc4.text_input("LinkedIn URL")
-    yt_link = sc5.text_input("YouTube URL")
-    wa_num = sc6.text_input("WhatsApp Number (No +)", "966572562151")
+    biz_name = c1.text_input("Business Name", "StopWebRent")
+    wa_num = c2.text_input("WhatsApp Number (for checkout)", "919876543210")
+    
+    st.subheader("Hero Section")
+    hero_h = st.text_input("Headline", "Stop Paying Rent for Your Website.")
+    hero_sub = st.text_area("Subtext", "The Titan Engine runs on $0 monthly fees. Pay once. Own it forever.")
+    hero_img = st.text_input("Hero BG Image", "https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=1600")
 
 with tabs[1]:
-    st.subheader("Hero Carousel")
-    hero_h = st.text_input("Hero Headline", key="hero_h")
-    hero_sub = st.text_input("Hero Subtext", key="hero_sub")
-    hero_video_id = st.text_input("YouTube Video ID (Background Override)", placeholder="e.g. dQw4w9WgXcQ")
-    hc1, hc2, hc3 = st.columns(3)
-    hero_img_1 = hc1.text_input("Slide 1", "https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=1600")
-    hero_img_2 = hc2.text_input("Slide 2", "https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=1600")
-    hero_img_3 = hc3.text_input("Slide 3", "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?q=80&w=1600")
-    st.divider()
-    col_s1, col_s2, col_s3 = st.columns(3)
-    stat_1 = col_s1.text_input("Stat 1", "0.1s")
-    label_1 = col_s1.text_input("Label 1", "Speed")
-    stat_2 = col_s2.text_input("Stat 2", "$0")
-    label_2 = col_s2.text_input("Label 2", "Fees")
-    stat_3 = col_s3.text_input("Stat 3", "100%")
-    label_3 = col_s3.text_input("Label 3", "Ownership")
-    f_title = st.text_input("Features Title", "Value Pillars")
-    feat_data_input = st.text_area("Features List", key="feat_data", height=150)
-    about_h_in = st.text_input("About Title", key="about_h")
-    about_img = st.text_input("About Image", "https://images.unsplash.com/photo-1543286386-713df548e9cc?q=80&w=1600")
-    about_short_in = st.text_area("Short Summary", key="about_short", height=100)
-    about_long = st.text_area("Full Content", "The Digital Landlord Trap...", height=200)
+    st.subheader("Features Grid")
+    feat_1 = st.text_input("Feat 1 (Icon|Title|Desc)", "bolt|Blazing Fast|0.1s load times.")
+    feat_2 = st.text_input("Feat 2 (Icon|Title|Desc)", "wallet|Zero Fees|No monthly hosting bills.")
+    feat_3 = st.text_input("Feat 3 (Icon|Title|Desc)", "shield|Unhackable|Static architecture security.")
 
 with tabs[2]:
-    top_bar_enabled = st.checkbox("Enable Top Bar")
-    top_bar_text = st.text_input("Promo Text", "🔥 50% OFF Launch Sale - Ends Soon!")
-    top_bar_link = st.text_input("Promo Link", "#pricing")
-    popup_enabled = st.checkbox("Enable Popup")
-    popup_delay = st.slider("Delay (seconds)", 1, 30, 5)
-    popup_title = st.text_input("Popup Headline", "Wait! Don't leave empty handed.")
-    popup_text = st.text_input("Popup Body", "Get our free pricing guide on WhatsApp.")
-    popup_cta = st.text_input("Popup Button", "Get it Now")
+    st.subheader("Dynamic Data Sources")
+    st.info("Paste your Google Sheet CSV Links here. The site will fetch data live.")
+    store_url = st.text_input("Store CSV URL")
+    blog_url = st.text_input("Blog CSV URL")
+    def_img = st.text_input("Default Placeholder Image", "https://via.placeholder.com/400")
 
 with tabs[3]:
-    col_p1, col_p2, col_p3 = st.columns(3)
-    titan_price = col_p1.text_input("Setup Price", "$199")
-    titan_mo = col_p1.text_input("Monthly Fee", "$0")
-    wix_name = col_p2.text_input("Competitor", "Wix")
-    wix_mo = col_p2.text_input("Comp. Monthly", "$29/mo")
-    save_val = col_p3.text_input("Savings", "$1,466")
+    st.subheader("SEO & Analytics")
+    ga_id = st.text_input("Google Analytics ID (G-XXXX)")
+    seo_desc = st.text_input("Meta Description", "The best web development service.")
 
 with tabs[4]:
-    sheet_url = st.text_input("Store CSV", placeholder="https://docs.google.com/spreadsheets/d/e/.../pub?output=csv")
-    custom_feat = st.text_input("Default Product Img", "https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=800")
-    col_pay1, col_pay2 = st.columns(2)
-    paypal_link = col_pay1.text_input("PayPal Link", "https://paypal.me/yourid")
-    upi_id = col_pay2.text_input("UPI ID", "name@upi")
+    st.subheader("Booking & Legal")
+    calendly = st.text_input("Calendly/Booking URL", "https://calendly.com")
+    legal_txt = st.text_area("Footer Legal Text", "© 2050 StopWebRent. All rights reserved.")
 
-with tabs[5]:
-    booking_embed = st.text_area("Embed Code", height=150, value='<!-- Calendly inline widget begin -->\n<div class="calendly-inline-widget" data-url="https://calendly.com/titan-demo/30min" style="min-width:320px;height:630px;"></div>\n<script type="text/javascript" src="https://assets.calendly.com/assets/external/widget.js" async></script>\n<!-- Calendly inline widget end -->')
-    booking_title = st.text_input("Booking Title", "Book an Appointment")
-    booking_desc = st.text_input("Booking Subtext", "Select a time slot.")
+# --- 3. COMPILATION ENGINE ---
 
-with tabs[6]:
-    blog_sheet_url = st.text_input("Blog CSV", placeholder="https://docs.google.com/spreadsheets/d/e/.../pub?output=csv")
-    blog_hero_title = st.text_input("Blog Title", "Latest Insights")
-    blog_hero_sub = st.text_input("Blog Subtext", "Thoughts on tech.")
-
-with tabs[7]:
-    testi_data = st.text_area("Testimonials", "Rajesh Gupta | Titan stopped the bleeding.\nSarah Jenkins | Easy updates.", height=100)
-    faq_data = st.text_area("FAQ", "Do I pay $0? ? Yes.\nIs it secure? ? Yes.", height=100)
-    priv_txt = st.text_area("Privacy", "We collect minimum data.", height=100)
-    term_txt = st.text_area("Terms", "You own the code.", height=100)
-
-
-# --- 5. THE SUPERCHARGED COMPILER ENGINE ---
-
-def format_text(text):
-    if not text: return ""
-    processed_text = re.sub(r'\*\*(.*?)\*\*', r'<strong>\1</strong>', text)
-    lines = processed_text.split('\n')
-    html_out = ""
-    in_list = False
-    for line in lines:
-        clean_line = line.strip()
-        if not clean_line: continue
-        if clean_line.startswith("* "):
-            if not in_list: html_out += '<ul style="margin-bottom:1rem; padding-left:1.5rem;">'; in_list = True
-            content = clean_line[2:] 
-            html_out += f'<li style="margin-bottom:0.5rem; opacity:0.9; color:inherit;">{content}</li>'
-        else:
-            if in_list: html_out += "</ul>"; in_list = False
-            html_out += f"<p style='margin-bottom:1rem; opacity:0.9; color:inherit;'>{clean_line}</p>"
-    if in_list: html_out += "</ul>"
-    return html_out
-
-def gen_schema():
-    schema = { "@context": "https://schema.org", "@type": "LocalBusiness", "name": biz_name, "image": logo_url or hero_img_1, "telephone": biz_phone, "email": biz_email, "url": prod_url, "description": seo_d }
-    return f'<script type="application/ld+json">{json.dumps(schema)}</script>'
-
-def gen_ga4():
-    if not ga_tag: return ""
-    return f"""<script async src="https://www.googletagmanager.com/gtag/js?id={ga_tag}"></script><script>window.dataLayer = window.dataLayer || []; function gtag(){{dataLayer.push(arguments);}} gtag('js', new Date()); gtag('config', '{ga_tag}');</script>"""
-
-def gen_pwa_manifest():
-    return json.dumps({ "name": biz_name, "short_name": pwa_short, "start_url": "./index.html", "display": "standalone", "background_color": "#ffffff", "theme_color": p_color, "description": pwa_desc, "icons": [{"src": pwa_icon, "sizes": "512x512", "type": "image/png"}] })
-
-def gen_sw():
-    return "self.addEventListener('install', (e) => { e.waitUntil(caches.open('titan-store').then((cache) => cache.addAll(['./index.html']))); }); self.addEventListener('fetch', (e) => { e.respondWith(caches.match(e.request).then((response) => response || fetch(e.request))); });"
-
-def get_theme_css():
-    bg_color, text_color, card_bg, glass_nav = "#ffffff", "#0f172a", "#ffffff", "rgba(255, 255, 255, 0.95)"
-    if "Midnight" in theme_mode: bg_color, text_color, card_bg, glass_nav = "#0f172a", "#f8fafc", "#1e293b", "rgba(15, 23, 42, 0.9)"
-    elif "Cyberpunk" in theme_mode: bg_color, text_color, card_bg, glass_nav = "#050505", "#00ff9d", "#111", "rgba(0,0,0,0.8)"
-    elif "Luxury" in theme_mode: bg_color, text_color, card_bg, glass_nav = "#1c1c1c", "#D4AF37", "#2a2a2a", "rgba(28,28,28,0.95)"
+def build_spa():
+    # 1. PROCESS CSS
+    css = TITAN_CSS.replace("{{P_COLOR}}", p_color).replace("{{S_COLOR}}", s_color)\
+                   .replace("{{BG_COLOR}}", bg_color).replace("{{TXT_COLOR}}", txt_color)\
+                   .replace("{{CARD_COLOR}}", card_color).replace("{{FONT_HEAD}}", h_font)\
+                   .replace("{{FONT_BODY}}", b_font)
     
-    anim_css = ".reveal { opacity: 0; transform: translateY(30px); transition: all 0.8s ease-out; } .reveal.active { opacity: 1; transform: translateY(0); }" if anim_type == "Fade Up" else ""
-    hero_align = "text-align: left; justify-content: flex-start; align-items: center;" if hero_layout == "Left" else "text-align: center; justify-content: center;"
-
-    return f"""
-    :root {{ --p: {p_color}; --s: {s_color}; --bg: {bg_color}; --txt: {text_color}; --card: {card_bg}; --radius: {border_rad}; --nav: {glass_nav}; --h-font: '{h_font}', sans-serif; --b-font: '{b_font}', sans-serif; }}
-    * {{ box-sizing: border-box; }} html {{ scroll-behavior: smooth; font-size: 16px; }}
-    body {{ background-color: var(--bg); color: var(--txt); font-family: var(--b-font); margin: 0; line-height: 1.6; overflow-x: hidden; }}
-    body.dark-mode {{ --bg: #0f172a; --txt: #f8fafc; --card: #1e293b; --nav: rgba(15, 23, 42, 0.95); }}
-    p, h1, h2, h3, h4, span, li, div {{ color: inherit; }}
-    h1, h2, h3, h4 {{ font-family: var(--h-font); color: var(--p); line-height: 1.2; margin-bottom: 1rem; }}
-    strong {{ color: var(--p); font-weight: 800; }}
-    .container {{ max-width: 1280px; margin: 0 auto; padding: 0 20px; }}
-    .btn {{ display: inline-flex; align-items: center; justify-content: center; padding: 1rem 2rem; border-radius: var(--radius); font-weight: 700; text-decoration: none; transition: 0.3s; text-transform: uppercase; cursor: pointer; border: none; text-align: center; min-height: 3.5rem; }}
-    .btn-primary {{ background: var(--p); color: white !important; }}
-    .btn-accent {{ background: var(--s); color: white !important; box-shadow: 0 10px 25px -5px var(--s); }}
-    .btn:hover {{ transform: translateY(-3px); filter: brightness(1.15); }}
-    nav {{ position: fixed; top: 0; width: 100%; z-index: 1000; background: var(--nav); backdrop-filter: blur(12px); padding: 1rem 0; transition: top 0.3s; }}
-    .nav-flex {{ display: flex; justify-content: space-between; align-items: center; }}
-    .nav-links {{ display: flex; align-items: center; }}
-    .nav-links a {{ margin-left: 2rem; text-decoration: none; font-weight: 600; color: var(--txt); opacity: 0.8; transition:0.2s; }}
-    .nav-links a:hover {{ opacity: 1; color: var(--s); }}
-    .mobile-menu {{ display: none; font-size: 1.5rem; cursor: pointer; }}
-    .hero {{ position: relative; min-height: 90vh; overflow: hidden; display: flex; {hero_align} color: white; padding-top: 80px; background-color: var(--p); }}
-    .carousel-slide {{ position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-size: cover; background-position: center; opacity: 0; transition: opacity 1.5s ease-in-out; z-index: 0; }}
-    .carousel-slide.active {{ opacity: 1; }}
-    .hero-overlay {{ background: rgba(0,0,0,0.5); position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }}
-    .hero-content {{ z-index: 2; position: relative; width: 100%; padding: 0 20px; }}
-    .hero h1 {{ color: #ffffff !important; font-size: clamp(2.5rem, 5vw, 4.5rem); text-shadow: 0 4px 20px rgba(0,0,0,0.4); }}
-    .hero p {{ color: rgba(255,255,255,0.95) !important; font-size: clamp(1.1rem, 2vw, 1.3rem); text-shadow: 0 2px 10px rgba(0,0,0,0.4); max-width:700px; }}
-    section {{ padding: clamp(2rem, 4vw, 3rem) 0; }}
-    .grid-3 {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; }}
-    .card {{ background: var(--card); border-radius: var(--radius); border: 1px solid rgba(100,100,100,0.1); transition: 0.3s; display: flex; flex-direction: column; overflow: hidden; }}
-    .card:hover {{ transform: translateY(-5px); box-shadow: 0 20px 40px -10px rgba(0,0,0,0.1); border-color: var(--s); }}
-    .card-body {{ padding: 1.5rem; display: flex; flex-direction: column; flex-grow: 1; }}
-    .prod-img {{ width: 100%; height: 250px; object-fit: cover; background: #f1f5f9; }} /* Prevents layout shift */
-    {anim_css}
-    @media (max-width: 768px) {{ .nav-links {{ position: fixed; top: 60px; left: -100%; width: 100%; height: 100vh; background: var(--bg); flex-direction: column; padding: 2rem; transition: 0.3s; align-items: flex-start; gap: 1.5rem; }} .nav-links.active {{ left: 0; }} .mobile-menu {{ display: block; }} .grid-3 {{ grid-template-columns: 1fr !important; }} }}
+    # 2. GENERATE STATIC HTML SECTIONS
+    nav_html = f"""
+    <nav>
+        <div class="container nav-flex">
+            <a href="#home" style="font-size:1.5rem; font-weight:900;">{biz_name}</a>
+            <div class="nav-links">
+                <a href="#home" class="nav-link">Home</a>
+                <a href="#store" class="nav-link">Store</a>
+                <a href="#blog" class="nav-link">Blog</a>
+                <a href="#booking" class="nav-link">Book</a>
+                <a href="#contact" class="nav-link btn btn-sm">Contact</a>
+            </div>
+        </div>
+    </nav>
     """
-
-def gen_nav():
-    logo_display = f'<img src="{logo_url}" height="40" alt="{biz_name} Logo">' if logo_url else f'<span style="font-weight:900; font-size:1.5rem; color:var(--p)">{biz_name}</span>'
-    return f"""<nav><div class="container nav-flex"><a href="index.html" style="text-decoration:none">{logo_display}</a><div class="mobile-menu" onclick="document.querySelector('.nav-links').classList.toggle('active')">☰</div><div class="nav-links"><a href="index.html">Home</a><a href="index.html#features">Features</a><a href="index.html#inventory">Store</a><a href="blog.html">Blog</a><a href="contact.html">Contact</a><a href="tel:{biz_phone}" class="btn-accent" style="padding:0.6rem 1.5rem; border-radius:50px; color:white !important;">Call Now</a></div></div></nav>"""
-
-def gen_hero():
-    bg_media = f'<div class="carousel-slide active" style="background-image: url(\'{hero_img_1}\')"></div>'
-    return f"""<section class="hero"><div class="hero-overlay"></div>{bg_media}<div class="container hero-content"><h1>{hero_h}</h1><p>{hero_sub}</p><div style="display:flex; gap:1rem; flex-wrap:wrap; {'justify-content:center;' if hero_layout == 'Center' else ''}"><a href="#inventory" class="btn btn-accent">Explore Now</a></div></div></section>"""
-
-def gen_features():
-    cards = "".join([f'<div class="card reveal"><div class="card-body"><h3>{p.split("|")[1].strip()}</h3><div>{format_text(p.split("|")[2].strip())}</div></div></div>' for p in feat_data_input.split('\n') if "|" in p])
-    return f"""<section id="features"><div class="container"><div class="grid-3">{cards}</div></div></section>"""
-
-def gen_csv_parser():
-    return "<script>function parseCSV(s){let r=[];let c='';let q=false;for(let i=0;i<s.length;i++){let x=s[i];if(x==='\"'){if(q&&s[i+1]==='\"'){c+='\"';i++;}else{q=!q;}}else if(x===','&&!q){r.push(c.trim());c='';}else{c+=x;}}r.push(c.trim());return r;}</script>"
-
-# --- UPGRADE: ZERO-LATENCY STORE LOADER ---
-def gen_inventory_js():
-    if not show_inventory: return ""
-    return f"""
-    {gen_csv_parser()}
-    <script>
-    function renderGrid(txt) {{
-        const lines = txt.split(/\\r\\n|\\n/);
-        const box = document.getElementById('inv-grid');
-        let html = '';
-        for(let i=1; i<lines.length; i++) {{
-            if(!lines[i].trim()) continue;
-            const c = parseCSV(lines[i]);
-            let mainImg = c[3] ? c[3].split('|')[0] : '{custom_feat}';
-            if(c.length > 1) {{
-                html += `<div class="card reveal active"><img src="${{mainImg}}" class="prod-img" loading="lazy"><div class="card-body"><h3>${{c[0]}}</h3><p style="color:var(--s); font-weight:bold;">${{c[1]}}</p><p>${{c[2]}}</p></div></div>`;
-            }}
-        }}
-        if(box) box.innerHTML = html;
-    }}
     
-    async function loadInv() {{
-        const cached = localStorage.getItem('titan_inv');
-        if(cached) renderGrid(cached); // Renders instantly in 0.01s
+    hero_html = f"""
+    <div id="view-home" class="view-section">
+        <section class="hero" style="background-image: url('{hero_img}');">
+            <div class="hero-overlay"></div>
+            <div class="container hero-content reveal active">
+                <h1>{hero_h}</h1>
+                <p style="font-size:1.2rem; opacity:0.9; margin-bottom:2rem;">{hero_sub}</p>
+                <a href="#store" class="btn btn-accent">Explore Store</a>
+                <a href="#contact" class="btn btn-outline" style="color:white; border-color:white;">Contact Us</a>
+            </div>
+        </section>
         
-        try {{
-            const res = await fetch('{sheet_url}'); 
-            const txt = await res.text();
-            if(txt !== cached) {{
-                localStorage.setItem('titan_inv', txt);
-                renderGrid(txt); // Silently updates if Google Sheet changed
-            }}
-        }} catch(e) {{ console.log(e); }}
-    }}
-    if(document.getElementById('inv-grid')) window.addEventListener('load', loadInv);
+        <section>
+            <div class="container">
+                <div class="grid-3">
+                    <div class="card reveal active"><div class="card-body"><h3>⚡ {feat_1.split('|')[1]}</h3><p>{feat_1.split('|')[2]}</p></div></div>
+                    <div class="card reveal active"><div class="card-body"><h3>💰 {feat_2.split('|')[1]}</h3><p>{feat_2.split('|')[2]}</p></div></div>
+                    <div class="card reveal active"><div class="card-body"><h3>🛡️ {feat_3.split('|')[1]}</h3><p>{feat_3.split('|')[2]}</p></div></div>
+                </div>
+            </div>
+        </section>
+    </div>
+    """
+    
+    store_html = f"""<div id="view-store" class="view-section" style="display:none; padding-top:80px;"><div class="container"><h2>Our Products</h2><div id="store-grid" class="grid-3"></div></div></div>"""
+    blog_html = f"""<div id="view-blog" class="view-section" style="display:none; padding-top:80px;"><div class="container"><h2>Latest Insights</h2><div id="blog-grid" style="display:flex; flex-direction:column; gap:2rem; max-width:800px; margin:0 auto;"></div></div></div>"""
+    
+    booking_html = f"""
+    <div id="view-booking" class="view-section" style="display:none; padding-top:80px;">
+        <div class="container" style="text-align:center;">
+            <h2>Schedule a Call</h2>
+            <iframe src="{calendly}" width="100%" height="700" frameborder="0"></iframe>
+        </div>
+    </div>
+    """
+    
+    contact_html = f"""
+    <div id="view-contact" class="view-section" style="display:none; padding-top:80px;">
+        <div class="container" style="max-width:600px;">
+            <h2>Contact Us</h2>
+            <div class="card"><div class="card-body">
+                <p><strong>WhatsApp:</strong> {wa_num}</p>
+                <p><strong>Email:</strong> support@{biz_name.lower()}.com</p>
+                <a href="https://wa.me/{wa_num}" class="btn btn-accent" style="text-align:center;">Chat on WhatsApp</a>
+            </div></div>
+        </div>
+    </div>
+    """
+    
+    # PRODUCT DETAIL VIEW
+    pd_html = f"""
+    <div id="view-product-detail" class="view-section" style="display:none; padding-top:100px;">
+        <div class="container">
+            <a href="#store" class="btn btn-sm btn-outline" style="margin-bottom:2rem;">&larr; Back to Store</a>
+            <div class="grid-3" style="grid-template-columns: 1fr 1fr;">
+                <img id="pd-img" style="width:100%; border-radius:12px;">
+                <div>
+                    <h1 id="pd-title"></h1>
+                    <h3 id="pd-price" style="color:var(--accent)"></h3>
+                    <p id="pd-desc" style="margin-bottom:2rem;"></p>
+                    <button id="pd-add" class="btn btn-accent">Add to Cart</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    """
+
+    # BLOG DETAIL VIEW
+    bp_html = f"""
+    <div id="view-post-detail" class="view-section" style="display:none; padding-top:100px;">
+        <div class="container" style="max-width:800px;">
+            <a href="#blog" class="btn btn-sm btn-outline" style="margin-bottom:2rem;">&larr; Back to Blog</a>
+            <img id="bp-img" style="width:100%; height:400px; object-fit:cover; border-radius:12px; margin-bottom:2rem;">
+            <h1 id="bp-title"></h1>
+            <div id="bp-content" style="line-height:1.8; font-size:1.1rem;"></div>
+        </div>
+    </div>
+    """
+
+    # CART HTML
+    cart_html = f"""
+    <div id="cart-float" onclick="toggleCart()">🛒 <span id="cart-count" style="font-size:0.8rem; position:absolute; top:0; right:0; background:red; width:20px; height:20px; border-radius:50%; display:flex; align-items:center; justify-content:center;">0</span></div>
+    <div id="cart-modal">
+        <div class="modal-content">
+            <h3>Your Cart <span style="float:right; cursor:pointer;" onclick="toggleCart()">&times;</span></h3>
+            <div id="cart-list" style="margin:1rem 0; max-height:300px; overflow-y:auto;"></div>
+            <button onclick="checkout()" class="btn btn-accent" style="width:100%;">Checkout via WhatsApp</button>
+        </div>
+    </div>
+    """
+
+    # 3. ASSEMBLE JS CONFIG
+    js_config = f"""
+    <script>
+    const CONFIG = {{
+        storeUrl: "{store_url}",
+        blogUrl: "{blog_url}",
+        whatsapp: "{wa_num}",
+        placeholderImg: "{def_img}"
+    }};
     </script>
     """
 
-def gen_inventory():
-    if not show_inventory: return ""
-    return f"""<section id="inventory" style="background:rgba(0,0,0,0.02)"><div class="container"><h2 style="text-align:center;">Store</h2><div id="inv-grid" class="grid-3"><div><div class="card"><div class="prod-img" style="animation: pulse 1.5s infinite;"></div><div class="card-body">Loading...</div></div></div></div></div></section>{gen_inventory_js()}"""
+    # 4. FINAL HTML
+    html = f"""
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>{biz_name} | Titan Engine</title>
+        <meta name="description" content="{seo_desc}">
+        <link href="https://fonts.googleapis.com/css2?family={h_font.replace(' ','+')}:wght@700;900&family={b_font.replace(' ','+')}:wght@300;400;600&display=swap" rel="stylesheet">
+        {css}
+        <!-- Google Analytics -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id={ga_id}"></script>
+        <script>window.dataLayer=window.dataLayer||[];function gtag(){{dataLayer.push(arguments);}}gtag('js',new Date());gtag('config','{ga_id}');</script>
+    </head>
+    <body>
+        {nav_html}
+        {hero_html}
+        {store_html}
+        {blog_html}
+        {booking_html}
+        {contact_html}
+        {pd_html}
+        {bp_html}
+        {cart_html}
+        <footer style="background:var(--primary); color:white; padding:2rem; text-align:center; margin-top:4rem;">
+            <p>{legal_txt}</p>
+        </footer>
+        {js_config}
+        {TITAN_JS_CORE}
+    </body>
+    </html>
+    """
+    return html
 
-def gen_footer():
-    return f"""<footer style="background:var(--p); color:white; padding:4rem 0; margin-top:auto;"><div class="container"><div class="grid-3"><div><h3 style="color:white;">{biz_name}</h3><p style="opacity:0.7;">{biz_addr}</p></div><div><h4 style="color:white;">Links</h4><a href="index.html" style="color:white; display:block;">Home</a><a href="privacy.html" style="color:white; display:block;">Privacy</a></div></div></div></footer>"""
-
-# --- UPGRADE: OPENGRAPH AND CORE WEB VITALS ---
-def build_page(title, content, extra_js=""):
-    og_img = og_image if og_image else logo_url
-    return f"""<!DOCTYPE html><html lang="en"><head>
-    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{title} | {biz_name}</title>
-    <meta name="description" content="{seo_d}">
-    <meta property="og:title" content="{title} | {biz_name}">
-    <meta property="og:description" content="{seo_d}">
-    <meta property="og:image" content="{og_img}">
-    <meta property="og:type" content="website">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family={h_font.replace(' ', '+')}:wght@700;900&family={b_font.replace(' ', '+')}:wght@400;600&display=swap" rel="stylesheet">
-    {gen_schema()}
-    {gen_ga4()}
-    <style>{get_theme_css()} @keyframes pulse {{ 0% {{opacity: 0.6;}} 50% {{opacity: 1;}} 100% {{opacity: 0.6;}} }} </style>
-    </head><body>{gen_nav()}{content}{gen_footer()}{extra_js}
-    <script>
-    // Intersection Observer for performance-friendly animations
-    const observer = new IntersectionObserver((entries) => {{ entries.forEach(e => {{ if(e.isIntersecting) e.target.classList.add('active'); }}); }});
-    document.querySelectorAll('.reveal').forEach((el) => observer.observe(el));
-    </script>
-    </body></html>"""
-
-# --- 6. PAGE ASSEMBLY ---
-home_content = ""
-if show_hero: home_content += gen_hero()
-if show_features: home_content += gen_features()
-if show_inventory: home_content += gen_inventory()
-
-# --- 7. DEPLOYMENT ---
+# --- 4. OUTPUT ---
 st.divider()
-st.subheader("🚀 Engine Ready")
 
-c1, c2 = st.columns([3, 1])
-with c1:
-    st.components.v1.html(build_page("Home", home_content), height=600, scrolling=True)
-with c2:
-    st.success("100/100 Lighthouse Ready.")
-    if st.button("DOWNLOAD WEBSITE ZIP", type="primary"):
-        z_b = io.BytesIO()
-        with zipfile.ZipFile(z_b, "a", zipfile.ZIP_DEFLATED, False) as zf:
-            zf.writestr("index.html", build_page("Home", home_content))
-            zf.writestr("privacy.html", build_page("Privacy", f"<section class='hero'><div class='container'><h1>Privacy</h1></div></section><div class='container'>{format_text(priv_txt)}</div>"))
-            zf.writestr("manifest.json", gen_pwa_manifest())
-            zf.writestr("service-worker.js", gen_sw())
-            zf.writestr("robots.txt", f"User-agent: *\nAllow: /\nSitemap: {prod_url}/sitemap.xml")
-        st.download_button("📥 Click to Save", z_b.getvalue(), f"{biz_name.lower().replace(' ','_')}_site.zip", "application/zip")
+if st.button("🚀 IGNITE TITAN ENGINE (GENERATE SITE)", type="primary"):
+    final_html = build_spa()
+    
+    # ZIP CREATION
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, "a", zipfile.ZIP_DEFLATED, False) as zf:
+        zf.writestr("index.html", final_html)
+        zf.writestr("manifest.json", json.dumps({
+            "name": biz_name, "short_name": biz_name, "start_url": ".", "display": "standalone",
+            "background_color": bg_color, "theme_color": p_color, 
+            "icons": [{"src": def_img, "sizes": "512x512", "type": "image/png"}]
+        }))
+        zf.writestr("sw.js", "self.addEventListener('fetch', e => e.respondWith(fetch(e.request).catch(() => caches.match(e.request))));")
+    
+    c1, c2 = st.columns([2, 1])
+    with c1:
+        st.success("✅ Build Successful: 100/100 Lighthouse Score Architecture")
+        st.markdown(f"**Stats:** 0 Database Calls | Client-Side Hydration | SPA Routing Active")
+    with c2:
+        st.download_button("📥 DOWNLOAD DEPLOYABLE ZIP", zip_buffer.getvalue(), "titan_v50_site.zip", "application/zip")
+    
+    # PREVIEW
+    st.components.v1.html(final_html, height=800, scrolling=True)
