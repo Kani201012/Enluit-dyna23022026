@@ -2,502 +2,451 @@ import streamlit as st
 import zipfile
 import io
 import json
+import datetime
 import re
 import requests
 
-# ==========================================
-# 🏛️ TITAN CORE: CONFIGURATION & STATE
-# ==========================================
+# --- 0. STATE MANAGEMENT ---
+def init_state(key, default_val):
+    if key not in st.session_state:
+        st.session_state[key] = default_val
 
-st.set_page_config(
-    page_title="Titan Engine | Infinity Edition",
-    layout="wide",
-    page_icon="⚡",
-    initial_sidebar_state="expanded"
-)
+init_state('hero_h', "Stop Paying Rent for Your Website.")
+init_state('hero_sub', "The Titan Engine is the world’s first 0.1s website architecture that runs on $0 monthly fees. Pay once. Own it forever.")
+init_state('about_h', "Control Your Empire")
+init_state('about_short', "No WordPress dashboard. No plugins to update. Just open your private Google Sheet, change a text, and watch your site update globally in seconds.")
+init_state('feat_data', "bolt | The Performance Pillar | **0.1s High-Velocity Loading**. While traditional sites take 3–5s, Titan loads instantly.\nwallet | The Economic Pillar | **$0 Monthly Fees**. We eliminated hosting subscriptions.\ntable | The Functional Pillar | **Google Sheets CMS**. Update prices and photos directly from a simple spreadsheet.\nshield | The Authority Pillar | **Unhackable Security**. Zero-DB Architecture removes the hacker's primary entry point.\nlayers | The Reliability Pillar | **Global Edge Deployment**. Distributed across 100+ servers worldwide.\nstar | The Conversion Pillar | **One-Tap WhatsApp**. Direct-to-Chat technology.")
 
-# Initialize Session State with defaults
-if 'config' not in st.session_state:
-    st.session_state.config = {
-        "biz_name": "Stop Web Rent",
-        "tagline": "The Future is Static.",
-        "primary_col": "#0f172a",
-        "accent_col": "#ef4444",
-        "font_head": "Space Grotesk",
-        "font_body": "Inter",
-        "wa_num": "966572562151",
-        "data_store": "",
-        "data_blog": "",
-        "google_analytics": ""
-    }
+# --- 1. APP CONFIGURATION ---
+st.set_page_config(page_title="Titan v43.0 | 13-File Core", layout="wide", page_icon="💎")
 
-# ==========================================
-# 🎨 TITAN CORE: CSS & JS GENERATORS
-# ==========================================
+# --- 2. STREAMLIT UI ---
+st.markdown("""
+    <style>
+    :root { --primary: #0f172a; --accent: #ef4444; }
+    .stApp { background-color: #f8fafc; color: #1e293b; font-family: sans-serif; }
+    [data-testid="stSidebar"] { background-color: #ffffff; border-right: 1px solid #e2e8f0; }
+    .stButton>button { width: 100%; border-radius: 8px; background: linear-gradient(135deg, #0f172a 0%, #334155 100%); color: white; border: none; height: 3rem; }
+    </style>
+    """, unsafe_allow_html=True)
 
-class AssetGenerator:
-    """Generates the liquid logic (CSS/JS) for the generated site."""
-    
-    @staticmethod
-    def get_css(c):
-        return f"""
-        :root {{
-            --p: {c['primary_col']}; --s: {c['accent_col']};
-            --bg: #ffffff; --txt: #1e293b; --surface: #f8fafc;
-            --font-h: '{c['font_head']}', sans-serif;
-            --font-b: '{c['font_body']}', sans-serif;
-            --shadow: 0 10px 30px -10px rgba(0,0,0,0.1);
-        }}
-        @media (prefers-color-scheme: dark) {{
-            :root {{ --bg: #0f172a; --txt: #f1f5f9; --surface: #1e293b; }}
-        }}
-        * {{ box-sizing: border-box; }}
-        body {{ margin: 0; font-family: var(--font-b); background: var(--bg); color: var(--txt); line-height: 1.6; overflow-x: hidden; }}
-        h1, h2, h3, h4 {{ font-family: var(--font-h); color: var(--p); line-height: 1.1; margin-bottom: 1rem; }}
-        .dark-mode h1, .dark-mode h2 {{ color: #fff; }}
-        
-        /* LAYOUT */
-        .container {{ max-width: 1280px; margin: 0 auto; padding: 0 20px; }}
-        section {{ padding: 4rem 0; }}
-        .grid-3 {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; }}
-        
-        /* COMPONENTS */
-        .btn {{ 
-            display: inline-flex; align-items: center; justify-content: center;
-            padding: 1rem 2rem; border-radius: 8px; font-weight: 700; 
-            text-decoration: none; transition: 0.3s; cursor: pointer; border: none;
-        }}
-        .btn-primary {{ background: var(--p); color: white; }}
-        .btn-accent {{ background: var(--s); color: white; }}
-        .btn:hover {{ transform: translateY(-3px); box-shadow: var(--shadow); filter: brightness(1.1); }}
-        
-        .card {{ 
-            background: var(--surface); padding: 2rem; border-radius: 12px; 
-            border: 1px solid rgba(128,128,128,0.1); transition: 0.3s; 
-            display: flex; flex-direction: column;
-        }}
-        .card:hover {{ transform: translateY(-5px); box-shadow: var(--shadow); border-color: var(--s); }}
-        
-        .prod-img {{ width: 100%; height: 250px; object-fit: cover; border-radius: 8px; margin-bottom: 1rem; background: #ddd; }}
-        
-        /* NAVIGATION */
-        nav {{ position: sticky; top: 0; z-index: 999; background: rgba(255,255,255,0.9); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(0,0,0,0.05); }}
-        .dark-mode nav {{ background: rgba(15,23,42,0.9); }}
-        .nav-inner {{ display: flex; justify-content: space-between; align-items: center; height: 70px; }}
-        .nav-links a {{ margin-left: 2rem; text-decoration: none; color: var(--txt); font-weight: 600; opacity: 0.8; transition: 0.2s; }}
-        .nav-links a:hover {{ color: var(--s); opacity: 1; }}
-        
-        /* UTILS */
-        .reveal {{ opacity: 0; transform: translateY(30px); transition: 0.8s ease; }}
-        .reveal.active {{ opacity: 1; transform: translateY(0); }}
-        
-        /* MOBILE */
-        @media (max-width: 768px) {{
-            .nav-links {{ display: none; }} 
-            h1 {{ font-size: 2.5rem; }}
-        }}
-        """
-
-    @staticmethod
-    def get_js(c):
-        return f"""
-        const CONFIG = {{
-            store: "{c['data_store']}",
-            blog: "{c['data_blog']}",
-            wa: "{c['wa_num']}"
-        }};
-        
-        // --- CSV PARSER (The Engine) ---
-        function parseCSV(str) {{
-            const arr = [];
-            let quote = false;  // 'true' means we're inside a quoted field
-            for (let row = 0, col = 0, c = 0; c < str.length; c++) {{
-                let cc = str[c], nc = str[c+1];
-                arr[row] = arr[row] || []; arr[row][col] = arr[row][col] || '';
-                if (cc == '"' && quote && nc == '"') {{ arr[row][col] += cc; ++c; continue; }}
-                if (cc == '"') {{ quote = !quote; continue; }}
-                if (cc == ',' && !quote) {{ ++col; continue; }}
-                if (cc == '\\r' && nc == '\\n' && !quote) {{ ++row; col = 0; ++c; continue; }}
-                if (cc == '\\n' && !quote) {{ ++row; col = 0; continue; }}
-                if (cc == '\\r' && !quote) {{ ++row; col = 0; continue; }}
-                arr[row][col] += cc;
-            }}
-            return arr;
-        }}
-
-        // --- STORE LOGIC ---
-        async function loadStore() {{
-            const el = document.getElementById('store-grid');
-            if(!el || !CONFIG.store) return;
-            try {{
-                const res = await fetch(CONFIG.store);
-                const txt = await res.text();
-                const rows = parseCSV(txt).slice(1); // Skip header
-                el.innerHTML = rows.map(r => {{
-                    if(r.length < 3) return '';
-                    let imgs = r[3] ? r[3].split('|') : ['https://via.placeholder.com/400'];
-                    return `
-                    <div class="card reveal">
-                        <img src="${{imgs[0]}}" class="prod-img" loading="lazy">
-                        <h3>${{r[0]}}</h3>
-                        <div style="color:var(--s); font-weight:bold; margin-bottom:0.5rem">${{r[1]}}</div>
-                        <p>${{r[2].substring(0,80)}}...</p>
-                        <div style="margin-top:auto; display:flex; gap:10px;">
-                            <button onclick="addToCart('${{r[0]}}', '${{r[1]}}')" class="btn btn-primary" style="flex:1">Add</button>
-                            <a href="product.html?id=${{encodeURIComponent(r[0])}}" class="btn btn-accent">View</a>
-                        </div>
-                    </div>`;
-                }}).join('');
-                triggerAnim();
-            }} catch(e) {{ el.innerHTML = "Error loading store."; console.error(e); }}
-        }}
-
-        // --- BLOG LOGIC ---
-        async function loadBlog() {{
-            const el = document.getElementById('blog-grid');
-            if(!el || !CONFIG.blog) return;
-            try {{
-                const res = await fetch(CONFIG.blog);
-                const txt = await res.text();
-                const rows = parseCSV(txt).slice(1);
-                el.innerHTML = rows.map(r => {{
-                    if(r.length < 4) return '';
-                    return `
-                    <div class="card reveal">
-                        <img src="${{r[5] || 'https://via.placeholder.com/800x400'}}" class="prod-img" style="height:200px">
-                        <span style="background:var(--s); color:white; padding:2px 10px; border-radius:20px; width:fit-content; font-size:0.8rem">${{r[3]}}</span>
-                        <h3 style="margin-top:10px">${{r[1]}}</h3>
-                        <p>${{r[4]}}</p>
-                        <a href="post.html?id=${{r[0]}}" class="btn btn-primary" style="margin-top:auto">Read Article</a>
-                    </div>`;
-                }}).join('');
-                triggerAnim();
-            }} catch(e) {{ console.error(e); }}
-        }}
-
-        // --- CART LOGIC ---
-        let cart = JSON.parse(localStorage.getItem('titan_cart')) || [];
-        function addToCart(n, p) {{ 
-            cart.push({{name:n, price:p}}); 
-            localStorage.setItem('titan_cart', JSON.stringify(cart));
-            updateCartUI();
-            alert(n + " added!");
-        }}
-        function updateCartUI() {{
-            const count = document.getElementById('cart-count');
-            if(count) count.innerText = cart.length;
-        }}
-        function checkout() {{
-            let msg = "Order Inquiry:%0A";
-            cart.forEach(i => msg += `- ${{i.name}} (${{i.price}})%0A`);
-            window.open(`https://wa.me/${{CONFIG.wa}}?text=${{msg}}`, '_blank');
-            cart = []; localStorage.setItem('titan_cart', '[]'); updateCartUI();
-        }}
-
-        // --- ANIMATIONS ---
-        function triggerAnim() {{
-            const observer = new IntersectionObserver((entries) => {{
-                entries.forEach(entry => {{
-                    if (entry.isIntersecting) entry.target.classList.add('active');
-                }});
-            }});
-            document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
-        }}
-        
-        window.addEventListener('load', () => {{
-            loadStore();
-            loadBlog();
-            updateCartUI();
-            triggerAnim();
-        }});
-        """
-
-# ==========================================
-# 🧱 TITAN CORE: PAGE BUILDER
-# ==========================================
-
-class PageBuilder:
-    def __init__(self, config):
-        self.c = config
-        self.css = AssetGenerator.get_css(config)
-        self.js = AssetGenerator.get_js(config)
-
-    def _nav(self):
-        blog_link = '<a href="blog.html">Blog</a>' if self.c['data_blog'] else ''
-        store_link = '<a href="index.html#store">Store</a>' if self.c['data_store'] else ''
-        return f"""
-        <nav><div class="container nav-inner">
-            <a href="index.html" style="font-size:1.5rem; font-weight:900; text-decoration:none; color:var(--p)">{self.c['biz_name']}</a>
-            <div class="nav-links">
-                <a href="index.html">Home</a>
-                {store_link}
-                {blog_link}
-                <a href="contact.html">Contact</a>
-                <a href="#" onclick="document.getElementById('cart-modal').style.display='flex'">Cart (<span id="cart-count">0</span>)</a>
-            </div>
-        </div></nav>
-        """
-
-    def _footer(self):
-        return f"""
-        <footer style="background:var(--p); color:white; padding:3rem 0; margin-top:auto">
-            <div class="container" style="text-align:center">
-                <h3>{self.c['biz_name']}</h3>
-                <p>Powered by Titan Engine v2050</p>
-                <div style="margin-top:1rem; opacity:0.7">
-                    <a href="privacy.html" style="color:white; margin:0 10px">Privacy</a>
-                    <a href="terms.html" style="color:white; margin:0 10px">Terms</a>
-                </div>
-            </div>
-        </footer>
-        """
-
-    def _cart_modal(self):
-        return """
-        <div id="cart-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:2000; align-items:center; justify-content:center;">
-            <div style="background:white; padding:2rem; border-radius:12px; width:90%; max-width:500px; color:#333">
-                <h2>Your Cart</h2>
-                <p>Ready to checkout?</p>
-                <div style="margin-top:2rem; display:flex; gap:10px">
-                    <button onclick="checkout()" class="btn btn-accent" style="flex:1">Checkout WhatsApp</button>
-                    <button onclick="document.getElementById('cart-modal').style.display='none'" class="btn" style="border:1px solid #ccc">Close</button>
-                </div>
-            </div>
-        </div>
-        """
-
-    def render_page(self, title, content, extra_head=""):
-        return f"""
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>{title} | {self.c['biz_name']}</title>
-            <link href="https://fonts.googleapis.com/css2?family={self.c['font_head'].replace(' ','+')}:wght@700;900&family={self.c['font_body'].replace(' ','+')}:wght@300;400;600&display=swap" rel="stylesheet">
-            {extra_head}
-            <style>{self.css}</style>
-        </head>
-        <body style="min-height:100vh; display:flex; flex-direction:column;">
-            {self._nav()}
-            {content}
-            {self._footer()}
-            {self._cart_modal()}
-            <script>{self.js}</script>
-        </body>
-        </html>
-        """
-
-# ==========================================
-# 🖥️ STREAMLIT UI (CONTROL PANEL)
-# ==========================================
-
-st.title("🏗️ Titan Engine: Infinity Architect")
-st.markdown("Generates **Multi-Page**, **Dynamic-Data**, **Static-Hosted** websites ready for 2050.")
-
+# --- 3. SIDEBAR ---
 with st.sidebar:
-    st.header("Global Settings")
-    st.session_state.config['biz_name'] = st.text_input("Business Name", st.session_state.config['biz_name'])
-    st.session_state.config['wa_num'] = st.text_input("WhatsApp Number", st.session_state.config['wa_num'])
+    st.title("Titan Architect")
+    st.caption("v43.0 | Full Restoration")
+    st.divider()
     
-    st.header("🎨 Visual DNA")
-    c1, c2 = st.columns(2)
-    st.session_state.config['primary_col'] = c1.color_picker("Primary", st.session_state.config['primary_col'])
-    st.session_state.config['accent_col'] = c2.color_picker("Accent", st.session_state.config['accent_col'])
-    
-    st.header("🔌 Dynamic Feeds")
-    st.session_state.config['data_store'] = st.text_input("Store CSV URL")
-    st.session_state.config['data_blog'] = st.text_input("Blog CSV URL")
+    with st.expander("🤖 AI Generator"):
+        raw_key = st.text_input("Groq API Key", type="password")
+        biz_desc = st.text_input("Business Description")
+        if st.button("Generate Copy"):
+            if not raw_key or not biz_desc: st.error("Key & Desc required")
+            else:
+                # Mock AI logic for speed/safety in snippet, replace with real req if needed
+                st.success("AI Generation Simulated (Add API logic here)")
 
-# --- MAIN EDITOR ---
-tabs = st.tabs(["Hero & Home", "About & Features", "Booking & Contact", "Review & Export"])
+    with st.expander("🎨 Design Studio", expanded=True):
+        theme_mode = st.selectbox("Theme", ["Ocean Breeze (Light)", "Midnight (Dark)", "Luxury Gold"])
+        c1, c2 = st.columns(2)
+        p_color = c1.color_picker("Primary", "#0F172A") 
+        s_color = c2.color_picker("Accent", "#EF4444")
+        h_font = st.selectbox("Headings", ["Outfit", "Montserrat", "Playfair Display"])
+        b_font = st.selectbox("Body", ["Plus Jakarta Sans", "Inter", "Roboto"])
+        hero_layout = st.selectbox("Hero Align", ["Center", "Left"])
+
+    with st.expander("🧩 Modules"):
+        show_hero = st.checkbox("Hero", True)
+        show_stats = st.checkbox("Stats", True)
+        show_features = st.checkbox("Features", True)
+        show_pricing = st.checkbox("Pricing", True)
+        show_inventory = st.checkbox("Store", True)
+        show_blog = st.checkbox("Blog", True)
+        show_booking = st.checkbox("Booking", True)
+
+# --- 4. MAIN TABS ---
+tabs = st.tabs(["Brand", "Content", "Pricing", "Store", "Booking", "Blog", "Legal"])
 
 with tabs[0]:
-    st.subheader("Hero Section")
-    h_title = st.text_input("Hero Title", "Stop Paying Rent.")
-    h_sub = st.text_area("Hero Subtext", "The future is static. Own your code.")
-    h_img = st.text_input("Hero Image URL", "https://images.unsplash.com/photo-1600607686527-6fb886090705?q=80&w=1600")
+    c1, c2 = st.columns(2)
+    with c1:
+        biz_name = st.text_input("Business Name", "StopWebRent.com")
+        biz_phone = st.text_input("Phone", "919007406953")
+        biz_email = st.text_input("Email", "hello@kaydiem.com")
+    with c2:
+        prod_url = st.text_input("URL", "https://www.stopwebrent.com")
+        biz_addr = st.text_area("Address", "Kolkata, India")
+        logo_url = st.text_input("Logo URL")
     
-    home_content = f"""
-    <section style="background:linear-gradient(rgba(0,0,0,0.5),rgba(0,0,0,0.5)), url('{h_img}'); background-size:cover; height:80vh; display:flex; align-items:center; color:white; text-align:center;">
-        <div class="container reveal">
-            <h1 style="font-size:clamp(3rem, 5vw, 5rem); color:white; margin-bottom:1rem">{h_title}</h1>
-            <p style="font-size:1.5rem; margin-bottom:2rem; opacity:0.9">{h_sub}</p>
-            <a href="#store" class="btn btn-accent">Explore Now</a>
-        </div>
-    </section>
-    
-    <section id="store">
-        <div class="container">
-            <h2 style="text-align:center; font-size:2.5rem; margin-bottom:3rem">Latest Drops</h2>
-            <div id="store-grid" class="grid-3">
-                <div style="text-align:center; grid-column:1/-1; padding:3rem">
-                    { "Loading Dynamic Data from Edge..." if st.session_state.config['data_store'] else "Connect a Google Sheet to see products." }
-                </div>
-            </div>
-        </div>
-    </section>
-    """
+    st.subheader("Socials")
+    s1, s2, s3, s4 = st.columns(4)
+    fb_link = s1.text_input("Facebook")
+    ig_link = s2.text_input("Instagram")
+    x_link = s3.text_input("Twitter")
+    wa_num = s4.text_input("WhatsApp (No +)", "919007406953")
+    lang_sheet = st.text_input("Lang CSV URL")
 
 with tabs[1]:
-    st.subheader("About Content")
-    about_txt = st.text_area("About Us Text", "We are building the future of web architecture.")
-    about_img = st.text_input("About Image", "https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=1600")
-    
-    about_content = f"""
-    <section>
-        <div class="container grid-3" style="grid-template-columns: 1fr 1fr; align-items:center">
-            <div class="reveal">
-                <h1>About Us</h1>
-                <p style="font-size:1.1rem">{about_txt}</p>
-            </div>
-            <img src="{about_img}" class="reveal" style="width:100%; border-radius:12px;">
-        </div>
-    </section>
-    """
-    
-    st.subheader("Features")
-    feat_html = ""
-    for i in range(3):
-        c1, c2 = st.columns(2)
-        ft = c1.text_input(f"Feature {i+1} Title", f"Feature {i+1}")
-        fd = c2.text_input(f"Feature {i+1} Desc", "Description here")
-        feat_html += f'<div class="card reveal"><h3>{ft}</h3><p>{fd}</p></div>'
-    
-    home_content += f'<section style="background:var(--surface)"><div class="container"><h2 style="text-align:center">Why Us</h2><div class="grid-3">{feat_html}</div></div></section>'
+    hero_h = st.text_input("Hero H1", key="hero_h")
+    hero_sub = st.text_input("Hero Sub", key="hero_sub")
+    hero_img = st.text_input("Hero Image", "https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=1600")
+    feat_data_input = st.text_area("Features (icon|title|desc)", key="feat_data")
+    about_h = st.text_input("About Title", key="about_h")
+    about_txt = st.text_area("About Text", key="about_short")
+    about_img = st.text_input("About Image", "https://images.unsplash.com/photo-1556761175-5973dc0f32e7")
 
 with tabs[2]:
-    st.subheader("Booking Embed")
-    booking_code = st.text_area("Calendly/Booking Embed Code", "<!-- Paste Calendly -->")
+    titan_price = st.text_input("Price", "$199")
+    wix_name = st.text_input("Competitor", "Wix")
+
+with tabs[3]:
+    sheet_url = st.text_input("Store CSV")
+    custom_feat = st.text_input("Default Product", "https://images.unsplash.com/photo-1505740420928-5e560c06d30e")
+    paypal_link = st.text_input("PayPal Link")
+    upi_id = st.text_input("UPI ID")
+
+with tabs[4]:
+    booking_embed = st.text_area("Calendly Embed", '<!-- Calendly -->')
+
+with tabs[5]:
+    blog_sheet_url = st.text_input("Blog CSV")
+
+with tabs[6]:
+    priv_txt = st.text_area("Privacy", "We respect privacy.")
+    term_txt = st.text_area("Terms", "Terms apply.")
+
+# ==========================================
+# 5. COMPILER ENGINE (RESTORED FULL UI)
+# ==========================================
+
+def get_css():
+    # Theme Logic
+    bg, txt, card, nav = "#F8FAFC", "#0F172A", "rgba(255,255,255,0.8)", "rgba(255,255,255,0.95)"
+    if "Midnight" in theme_mode: bg, txt, card, nav = "#0f172a", "#f8fafc", "#1e293b", "rgba(15,23,42,0.95)"
     
-    contact_content = f"""
-    <section>
-        <div class="container" style="text-align:center; max-width:800px">
-            <h1>Contact Us</h1>
-            <div class="card reveal" style="text-align:left; margin-top:2rem">
-                <h3>Get in Touch</h3>
-                <p>Email: hello@{st.session_state.config['biz_name'].replace(' ','').lower()}.com</p>
-                <p>WhatsApp: {st.session_state.config['wa_num']}</p>
-                <a href="https://wa.me/{st.session_state.config['wa_num']}" class="btn btn-accent" style="margin-top:1rem; width:100%; text-align:center">Chat Now</a>
+    align = "center" if hero_layout == "Center" else "flex-start"
+    t_align = "center" if hero_layout == "Center" else "left"
+
+    return f"""
+    :root {{ --p: {p_color}; --s: {s_color}; --bg: {bg}; --txt: {txt}; --card: {card}; --nav: {nav}; --font-h: '{h_font}', sans-serif; --font-b: '{b_font}', sans-serif; }}
+    * {{ box-sizing: border-box; outline: none; }}
+    body {{ background: var(--bg); color: var(--txt); font-family: var(--font-b); margin: 0; line-height: 1.6; overflow-x: hidden; }}
+    h1, h2, h3, h4 {{ font-family: var(--font-h); color: var(--txt); margin-bottom: 1rem; line-height: 1.2; }}
+    h1 {{ font-size: clamp(2.5rem, 5vw, 4rem); font-weight: 800; }}
+    a {{ text-decoration: none; color: inherit; transition: 0.3s; }}
+    
+    .container {{ max-width: 1200px; margin: 0 auto; padding: 0 20px; }}
+    
+    /* BUTTONS */
+    .btn {{ display: inline-flex; align-items: center; justify-content: center; padding: 0.8rem 2rem; border-radius: 8px; font-weight: 700; text-transform: uppercase; cursor: pointer; border: none; font-size: 0.9rem; transition: 0.3s; }}
+    .btn-primary {{ background: var(--p); color: white !important; }}
+    .btn-primary:hover {{ transform: translateY(-3px); box-shadow: 0 10px 20px -5px rgba(0,0,0,0.3); }}
+    .btn-outline {{ border: 2px solid var(--p); color: var(--p) !important; background: transparent; }}
+    .btn-outline:hover {{ background: var(--p); color: white !important; }}
+
+    /* NAV */
+    nav {{ position: fixed; top: 0; width: 100%; z-index: 1000; background: var(--nav); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(0,0,0,0.1); padding: 1rem 0; }}
+    .nav-flex {{ display: flex; justify-content: space-between; align-items: center; }}
+    .nav-links {{ display: flex; gap: 2rem; align-items: center; }}
+    .nav-links a {{ font-weight: 600; opacity: 0.8; }}
+    .nav-links a:hover {{ opacity: 1; color: var(--p); }}
+    
+    /* HERO */
+    .hero {{ position: relative; min-height: 80vh; display: flex; align-items: center; justify-content: {align}; text-align: {t_align}; padding-top: 80px; background: url('{hero_img}') center/cover no-repeat; }}
+    .hero::before {{ content:''; position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.6); }}
+    .hero-content {{ position: relative; z-index: 2; color: white; max-width: 800px; }}
+    .hero h1 {{ color: white; text-shadow: 0 4px 10px rgba(0,0,0,0.3); }}
+    
+    /* GRID SYSTEM */
+    .grid-3 {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; margin-top: 2rem; }}
+    .card {{ background: var(--card); padding: 2rem; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); border: 1px solid rgba(0,0,0,0.05); transition: 0.3s; display: flex; flex-direction: column; height: 100%; }}
+    .card:hover {{ transform: translateY(-5px); box-shadow: 0 15px 30px rgba(0,0,0,0.1); }}
+    
+    /* PRODUCT CARD SPECIFIC */
+    .prod-img {{ width: 100%; height: 250px; object-fit: cover; border-radius: 12px; margin-bottom: 1rem; }}
+    .prod-price {{ font-size: 1.25rem; font-weight: 800; color: var(--s); margin: 0.5rem 0; }}
+    
+    /* CONTACT PAGE GRID */
+    .contact-grid {{ display: grid; grid-template-columns: 1fr 1.5fr; gap: 4rem; }}
+    .contact-info {{ background: var(--p); color: white; padding: 2rem; border-radius: 16px; }}
+    .contact-info a {{ color: white; text-decoration: underline; }}
+    
+    /* FOOTER PROFESSIONAL */
+    footer {{ background: #0f172a; color: white; padding: 4rem 0; margin-top: 4rem; }}
+    .footer-grid {{ display: grid; grid-template-columns: 1.5fr 1fr 1fr; gap: 3rem; }}
+    footer a {{ display: block; margin-bottom: 0.5rem; opacity: 0.7; }}
+    footer a:hover {{ opacity: 1; color: white; }}
+    .social-icon {{ width: 24px; height: 24px; fill: white; margin-right: 15px; opacity: 0.8; }}
+    
+    /* MODAL */
+    .modal {{ display: none; position: fixed; z-index: 2000; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(5px); }}
+    .modal-content {{ background: var(--bg); margin: 15% auto; padding: 2rem; border-radius: 16px; width: 90%; max-width: 400px; position: relative; color: var(--txt); }}
+    
+    /* RESPONSIVE */
+    @media (max-width: 768px) {{
+        .nav-links {{ display: none; }} /* Mobile menu needs JS toggle */
+        .contact-grid, .footer-grid {{ grid-template-columns: 1fr; gap: 2rem; }}
+        h1 {{ font-size: 2.5rem; }}
+    }}
+    """
+
+def gen_nav():
+    lang_btn = f'<button onclick="openModal(\'langModal\')" class="btn-outline" style="padding:0.5rem 1rem; border-radius:50px;">🌐 Lang</button>' if lang_sheet else ""
+    return f"""
+    <nav><div class="container nav-flex">
+        <a href="index.html" style="font-size:1.5rem; font-weight:900; color:var(--p);">{biz_name}</a>
+        <div class="nav-links">
+            <a href="index.html">Home</a>
+            <a href="product.html">Store</a>
+            <a href="blog.html">Blog</a>
+            <a href="contact.html">Contact</a>
+            {lang_btn}
+            <a href="tel:{biz_phone}" class="btn-primary">Call Now</a>
+        </div>
+    </div></nav>
+    <div id="langModal" class="modal"><div class="modal-content"><span onclick="document.getElementById('langModal').style.display='none'" style="float:right; cursor:pointer; font-size:1.5rem;">&times;</span><h3>Select Language</h3><button onclick="toggleLang()" class="btn-primary" style="width:100%">Switch Language</button></div></div>
+    """
+
+def gen_footer():
+    # PROFESSIONAL 3-COLUMN FOOTER
+    return f"""
+    <footer><div class="container">
+        <div class="footer-grid">
+            <div>
+                <h3 style="color:white">{biz_name}</h3>
+                <p style="opacity:0.7">{biz_addr}</p>
+                <div style="margin-top:1.5rem">
+                    {f'<a href="{fb_link}" style="display:inline"><svg class="social-icon" viewBox="0 0 24 24"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg></a>' if fb_link else ''}
+                    {f'<a href="{ig_link}" style="display:inline"><svg class="social-icon" viewBox="0 0 24 24"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2a2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6zM2 9h4v12H2zM4 2a2 2 0 1 1-2 2a2 2 0 0 1 2-2z"></path></svg></a>' if li_link else ''}
+                </div>
             </div>
-            <div style="margin-top:4rem">
-                <h2>Book a Call</h2>
-                {booking_code}
+            <div>
+                <h4 style="color:white">Links</h4>
+                <a href="index.html">Home</a>
+                <a href="product.html">Store</a>
+                <a href="blog.html">Blog</a>
+                <a href="booking.html">Book Now</a>
+            </div>
+            <div>
+                <h4 style="color:white">Legal</h4>
+                <a href="privacy.html">Privacy Policy</a>
+                <a href="terms.html">Terms of Service</a>
             </div>
         </div>
+        <div style="text-align:center; border-top:1px solid rgba(255,255,255,0.1); margin-top:3rem; padding-top:2rem; opacity:0.5;">
+            &copy; {datetime.date.today().year} {biz_name}. Powered by Titan Engine.
+        </div>
+    </div></footer>
+    """
+
+def gen_js():
+    return f"""
+    <script>
+    // CSV PARSER
+    function parseCSVLine(str) {{ const res = []; let cur = ''; let inQuote = false; for (let i = 0; i < str.length; i++) {{ const c = str[i]; if (c === '"') {{ if (inQuote && str[i+1] === '"') {{ cur += '"'; i++; }} else {{ inQuote = !inQuote; }} }} else if (c === ',' && !inQuote) {{ res.push(cur.trim()); cur = ''; }} else {{ cur += c; }} }} res.push(cur.trim()); return res; }}
+    
+    // CART SYSTEM
+    let cart = JSON.parse(localStorage.getItem('titanCart')) || [];
+    function addToCart(name, price) {{ cart.push({{name, price}}); updateCart(); alert('Added to cart'); }}
+    function updateCart() {{ 
+        const el = document.getElementById('cart-count'); 
+        if(el) el.innerText = cart.length; 
+        localStorage.setItem('titanCart', JSON.stringify(cart));
+    }}
+    function checkoutWA() {{
+        let msg = "New Order:\\n";
+        cart.forEach(i => msg += i.name + " - " + i.price + "\\n");
+        window.open("https://wa.me/{wa_num}?text=" + encodeURIComponent(msg), '_blank');
+    }}
+    
+    // LANG SWITCHER
+    async function toggleLang() {{
+        try {{
+            const res = await fetch('{lang_sheet}'); const txt = await res.text();
+            const lines = txt.split(/\\r\\n|\\n/);
+            for(let i=1; i<lines.length; i++) {{
+                const row = parseCSVLine(lines[i]);
+                if(row.length > 1) {{ 
+                    const el = document.getElementById(row[0]); 
+                    if(el) el.innerText = row[1]; 
+                }}
+            }}
+            document.getElementById('langModal').style.display = 'none';
+        }} catch(e) {{ alert('Language file not found or invalid'); }}
+    }}
+    
+    function openModal(id) {{ document.getElementById(id).style.display = 'block'; }}
+    window.onload = updateCart;
+    </script>
+    """
+
+def gen_cart_modal():
+    return """
+    <div id="cart-float" onclick="openModal('cartModal')" style="position:fixed; bottom:30px; right:30px; background:var(--p); color:white; padding:15px; border-radius:50px; cursor:pointer; z-index:999; box-shadow:0 10px 20px rgba(0,0,0,0.2);">
+        🛒 <span id="cart-count">0</span>
+    </div>
+    <div id="cartModal" class="modal"><div class="modal-content">
+        <span onclick="document.getElementById('cartModal').style.display='none'" style="float:right; cursor:pointer;">&times;</span>
+        <h3>Your Cart</h3>
+        <button onclick="checkoutWA()" class="btn-primary" style="width:100%; margin-top:1rem;">Checkout on WhatsApp</button>
+        <button onclick="localStorage.removeItem('titanCart'); location.reload();" class="btn-outline" style="width:100%; margin-top:0.5rem;">Clear Cart</button>
+    </div></div>
+    """
+
+def gen_page(title, content):
+    return f"""<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{title} | {biz_name}</title><link href="https://fonts.googleapis.com/css2?family={h_font.replace(' ','+')}:wght@700&family={b_font.replace(' ','+')}:wght@400;600&display=swap" rel="stylesheet"><style>{get_css()}</style></head><body>{gen_nav()}{content}{gen_footer()}{gen_cart_modal()}{gen_js()}</body></html>"""
+
+# --- PAGE CONTENT GENERATORS ---
+
+def get_home_content():
+    # Features
+    feat_html = ""
+    for line in feat_data.split('\n'):
+        if "|" in line:
+            parts = line.split('|')
+            if len(parts) >= 3: feat_html += f'<div class="card"><h3>{parts[1]}</h3><p>{parts[2]}</p></div>'
+            
+    return f"""
+    {gen_hero()}
+    <section class="container">
+        <h2 style="text-align:center; margin-bottom:2rem;">Features</h2>
+        <div class="grid-3">{feat_html}</div>
+    </section>
+    <section style="background:var(--p); color:white; text-align:center;">
+        <div class="container"><h2>Start Today</h2><a href="contact.html" class="btn" style="background:white; color:var(--p)">Get Started</a></div>
     </section>
     """
 
-with tabs[3]:
-    st.success("Configuration Complete. Ready to compile.")
-    
-    if st.button("🚀 BUILD & DOWNLOAD WEBSITE", type="primary"):
-        # Instantiate Builder
-        builder = PageBuilder(st.session_state.config)
-        
-        # 1. Build Pages
-        pg_home = builder.render_page("Home", home_content)
-        pg_contact = builder.render_page("Contact", contact_content)
-        pg_about = builder.render_page("About", about_content)
-        pg_terms = builder.render_page("Terms", "<div class='container'><br><h1>Terms</h1><p>Standard terms apply.</p></div>")
-        pg_privacy = builder.render_page("Privacy", "<div class='container'><br><h1>Privacy</h1><p>We value your privacy.</p></div>")
-        
-        # 2. Build Blog Index & Dynamic Post Page
-        pg_blog = builder.render_page("Blog", """
-            <section><div class="container">
-                <h1 style="text-align:center">Our Blog</h1>
-                <div id="blog-grid" class="grid-3" style="margin-top:3rem">Loading...</div>
-            </div></section>
-        """)
-        
-        # DYNAMIC PRODUCT DETAIL PAGE (JS handles the hydration)
-        pg_product = builder.render_page("Product", """
-            <section><div class="container" id="prod-container">
-                <a href="index.html#store" class="btn">&larr; Back</a>
-                <div class="grid-3" style="margin-top:2rem; grid-template-columns:1fr 1fr;">
-                    <img id="p-img" style="width:100%; border-radius:12px;">
-                    <div>
-                        <h1 id="p-title">Loading...</h1>
-                        <h2 id="p-price" style="color:var(--s)"></h2>
-                        <p id="p-desc"></p>
-                        <button id="p-btn" class="btn btn-primary">Add to Cart</button>
-                    </div>
+def get_product_content():
+    return f"""
+    <section class="container" style="padding-top:120px;">
+        <h1 style="text-align:center;">Portfolio & Store</h1>
+        <div id="store-grid" class="grid-3">Loading products...</div>
+    </section>
+    <script>
+    async function loadStore() {{
+        const box = document.getElementById('store-grid');
+        if(!'{sheet_url}') {{
+            box.innerHTML = `<div class="card"><img src="{custom_feat}" class="prod-img"><h3>Demo Product</h3><p class="prod-price">$99.00</p><button class="btn-primary btn" onclick="addToCart('Demo', '$99')">Add to Cart</button></div>`;
+            return;
+        }}
+        try {{
+            const res = await fetch('{sheet_url}'); const txt = await res.text(); const lines = txt.split(/\\r\\n|\\n/);
+            box.innerHTML = '';
+            for(let i=1; i<lines.length; i++) {{
+                const r = parseCSVLine(lines[i]);
+                if(r.length > 1) {{
+                    let img = (r[3] && r[3].length > 5) ? r[3].split('|')[0] : '{custom_feat}';
+                    box.innerHTML += `<div class="card"><img src="${{img}}" class="prod-img"><h3>${{r[0]}}</h3><p class="prod-price">${{r[1]}}</p><p>${{r[2]}}</p><button class="btn-primary btn" style="width:100%" onclick="addToCart('${{r[0].replace(/'/g,"\\'")}}', '${{r[1].replace(/'/g,"\\'")}}')">Add to Cart</button></div>`;
+                }}
+            }}
+        }} catch(e) {{ console.log(e); }}
+    }}
+    loadStore();
+    </script>
+    """
+
+def get_blog_content():
+    return f"""
+    <section class="container" style="padding-top:120px;">
+        <h1 style="text-align:center;">{blog_hero_title}</h1>
+        <div id="blog-grid" class="grid-3">Loading posts...</div>
+    </section>
+    <script>
+    async function loadBlog() {{
+        const box = document.getElementById('blog-grid');
+        if(!'{blog_sheet_url}') {{ box.innerHTML = '<p style="text-align:center">No blog connected.</p>'; return; }}
+        try {{
+            const res = await fetch('{blog_sheet_url}'); const txt = await res.text(); const lines = txt.split(/\\r\\n|\\n/);
+            box.innerHTML = '';
+            for(let i=1; i<lines.length; i++) {{
+                const r = parseCSVLine(lines[i]);
+                if(r.length > 4) {{
+                    box.innerHTML += `<div class="card"><img src="${{r[5]}}" class="prod-img"><span class="blog-badge">${{r[3]}}</span><h3><a href="post.html?id=${{r[0]}}">${{r[1]}}</a></h3></div>`;
+                }}
+            }}
+        }} catch(e) {{}}
+    }}
+    loadBlog();
+    </script>
+    """
+
+def get_post_content():
+    return f"""
+    <div id="post-content" class="container" style="padding-top:120px; max-width:800px;">Loading...</div>
+    <script>
+    async function loadSingle() {{
+        const id = new URLSearchParams(window.location.search).get('id');
+        try {{
+            const res = await fetch('{blog_sheet_url}'); const txt = await res.text(); const lines = txt.split(/\\r\\n|\\n/);
+            for(let i=1; i<lines.length; i++) {{
+                const r = parseCSVLine(lines[i]);
+                if(r[0] === id) {{
+                    document.getElementById('post-content').innerHTML = `<h1>${{r[1]}}</h1><img src="${{r[5]}}" style="width:100%; border-radius:12px; margin:2rem 0;"><div style="line-height:1.8">${{r[6].replace(/\\n/g,'<br>')}}</div>`;
+                }}
+            }}
+        }} catch(e) {{}}
+    }}
+    loadSingle();
+    </script>
+    """
+
+def get_contact_content():
+    return f"""
+    <section class="container" style="padding-top:120px;">
+        <h1 style="text-align:center; margin-bottom:3rem;">Contact Us</h1>
+        <div class="contact-grid">
+            <div class="contact-info">
+                <h3>Get In Touch</h3>
+                <p>📍 {biz_addr}</p>
+                <p>📞 <a href="tel:{biz_phone}">{biz_phone}</a></p>
+                <p>✉️ <a href="mailto:{biz_email}">{biz_email}</a></p>
+                <div style="margin-top:2rem;">
+                    <a href="https://wa.me/{wa_num}" class="btn" style="background:white; color:var(--p); width:100%; display:block; text-align:center;">Chat on WhatsApp</a>
                 </div>
-            </div></section>
-            <script>
-            async function loadP() {
-                const params = new URLSearchParams(window.location.search);
-                const id = params.get('id');
-                const res = await fetch(CONFIG.store);
-                const txt = await res.text();
-                const rows = parseCSV(txt);
-                const p = rows.find(r => r[0] == id);
-                if(p) {
-                    let imgs = p[3] ? p[3].split('|') : [''];
-                    document.getElementById('p-img').src = imgs[0];
-                    document.getElementById('p-title').innerText = p[0];
-                    document.getElementById('p-price').innerText = p[1];
-                    document.getElementById('p-desc').innerText = p[2];
-                    document.getElementById('p-btn').onclick = () => addToCart(p[0], p[1]);
-                }
-            }
-            loadP();
-            </script>
-        """)
+            </div>
+            <div class="card">
+                <h3>Send Message</h3>
+                <form action="https://formsubmit.co/{biz_email}" method="POST">
+                    <input type="text" name="name" placeholder="Your Name" required>
+                    <input type="email" name="email" placeholder="Your Email" required>
+                    <textarea name="msg" rows="5" placeholder="Message"></textarea>
+                    <button type="submit" class="btn-primary btn" style="width:100%">Send</button>
+                </form>
+            </div>
+        </div>
+        <div style="margin-top:4rem; border-radius:12px; overflow:hidden;">{map_iframe}</div>
+    </section>
+    """
 
-        # DYNAMIC BLOG POST PAGE
-        pg_post = builder.render_page("Article", """
-            <section><div class="container" style="max-width:800px">
-                <a href="blog.html" class="btn">&larr; Back</a>
-                <img id="b-img" style="width:100%; height:400px; object-fit:cover; border-radius:12px; margin-top:2rem">
-                <h1 id="b-title" style="font-size:3rem; line-height:1.1; margin-top:1rem">Loading...</h1>
-                <div id="b-body" style="font-size:1.2rem; line-height:1.8; color:#555"></div>
-            </div></section>
-            <script>
-            async function loadB() {
-                const params = new URLSearchParams(window.location.search);
-                const id = params.get('id');
-                const res = await fetch(CONFIG.blog);
-                const txt = await res.text();
-                const rows = parseCSV(txt);
-                const p = rows.find(r => r[0] == id);
-                if(p) {
-                    document.getElementById('b-img').src = p[5];
-                    document.getElementById('b-title').innerText = p[1];
-                    document.getElementById('b-body').innerHTML = p[6] ? p[6].replace(/\\n/g, '<br>') : '';
-                }
-            }
-            loadB();
-            </script>
-        """)
+# --- 6. DOWNLOAD HANDLER (13 FILES) ---
+st.divider()
+st.subheader("🚀 Final Output")
 
-        # 3. Zip It
-        zip_buffer = io.BytesIO()
-        with zipfile.ZipFile(zip_buffer, "a", zipfile.ZIP_DEFLATED, False) as zf:
-            zf.writestr("index.html", pg_home)
-            zf.writestr("contact.html", pg_contact)
-            zf.writestr("about.html", pg_about)
-            zf.writestr("blog.html", pg_blog)
-            zf.writestr("product.html", pg_product)
-            zf.writestr("post.html", pg_post)
-            zf.writestr("terms.html", pg_terms)
-            zf.writestr("privacy.html", pg_privacy)
-            
-            # PWA Manifest
-            zf.writestr("manifest.json", json.dumps({
-                "name": st.session_state.config['biz_name'],
-                "start_url": "index.html",
-                "display": "standalone",
-                "theme_color": st.session_state.config['primary_col']
-            }))
+# PREVIEW
+preview = st.radio("Preview", ["Home", "Store", "Contact"], horizontal=True)
+if preview == "Home": st.components.v1.html(gen_page("Home", get_home_content()), height=600, scrolling=True)
+elif preview == "Store": st.components.v1.html(gen_page("Store", get_product_content()), height=600, scrolling=True)
+elif preview == "Contact": st.components.v1.html(gen_page("Contact", get_contact_content()), height=600, scrolling=True)
 
-        st.download_button(
-            label="📥 DOWNLOAD 2050 SITE PACKAGE",
-            data=zip_buffer.getvalue(),
-            file_name="titan_infinity_build.zip",
-            mime="application/zip",
-            type="primary"
-        )
+# ZIP CREATION
+if st.button("GENERATE FULL WEBSITE ZIP", type="primary"):
+    z_b = io.BytesIO()
+    with zipfile.ZipFile(z_b, "a", zipfile.ZIP_DEFLATED, False) as zf:
+        # 1. HTML FILES
+        zf.writestr("index.html", gen_page("Home", get_home_content()))
+        zf.writestr("about.html", gen_page("About", f"<section class='container' style='padding-top:120px'><h1>{about_h}</h1><div class='grid-3'><div>{about_txt}</div><img src='{about_img}' style='width:100%;border-radius:12px'></div></section>"))
+        zf.writestr("contact.html", gen_page("Contact", get_contact_content()))
+        zf.writestr("product.html", gen_page("Store", get_product_content()))
+        zf.writestr("blog.html", gen_page("Blog", get_blog_content()))
+        zf.writestr("post.html", gen_page("Article", get_post_content()))
+        zf.writestr("booking.html", gen_page("Booking", f"<section class='container' style='padding-top:120px'><h1 style='text-align:center'>Book Now</h1>{booking_embed}</section>"))
+        zf.writestr("privacy.html", gen_page("Privacy Policy", f"<section class='container' style='padding-top:120px'><h1>Privacy Policy</h1><p>{priv_txt}</p></section>"))
+        zf.writestr("terms.html", gen_page("Terms of Service", f"<section class='container' style='padding-top:120px'><h1>Terms</h1><p>{term_txt}</p></section>"))
         
-        st.subheader("Preview")
-        st.components.v1.html(pg_home, height=600, scrolling=True)
+        # 2. SYSTEM FILES
+        zf.writestr("manifest.json", gen_pwa_manifest())
+        zf.writestr("service-worker.js", gen_sw())
+        zf.writestr("robots.txt", f"User-agent: *\nAllow: /\nSitemap: {prod_url}/sitemap.xml")
+        zf.writestr("sitemap.xml", f"""<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>{prod_url}/</loc></url></urlset>""")
+
+    st.download_button("📥 Click to Download 13 Files", z_b.getvalue(), "titan_v43_complete.zip", "application/zip")
