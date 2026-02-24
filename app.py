@@ -386,7 +386,7 @@ def get_theme_css():
     h2 {{ font-size: clamp(2rem, 4vw, 3rem); }}
     p {{ margin-bottom: 1rem; }}
     
-    .hero {{ position: relative; min-height: 90vh; overflow: hidden; display: flex; {hero_align} color: white; padding-top: 80px; background-color: var(--p); }}
+    .hero {{ position: relative; min-height: 90vh; overflow: hidden; display: flex; {hero_align} color: white; padding-top: 180px; background-color: var(--p); }}
     .carousel-slide {{ position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-size: cover; background-position: center; opacity: 0; transition: opacity 1.5s ease-in-out; z-index: 0; }}
     .carousel-slide.active {{ opacity: 1; }}
     .hero-overlay {{ background: rgba(0,0,0,{overlay_opacity}); position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }}
