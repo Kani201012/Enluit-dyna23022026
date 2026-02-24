@@ -18,12 +18,7 @@ init_state('about_short', "No WordPress dashboard. No plugins to update. Just op
 init_state('feat_data', "bolt | The Performance Pillar | **0.1s High-Velocity Loading**. While traditional sites take 3–5s, Titan loads instantly.\nwallet | The Economic Pillar | **$0 Monthly Fees**. We eliminated hosting subscriptions.\ntable | The Functional Pillar | **Google Sheets CMS**. Update prices and photos directly from a simple spreadsheet.\nshield | The Authority Pillar | **Unhackable Security**. Zero-DB Architecture removes the hacker's primary entry point.\nlayers | The Reliability Pillar | **Global Edge Deployment**. Distributed across 100+ servers worldwide.\nstar | The Conversion Pillar | **One-Tap WhatsApp**. Direct-to-Chat technology.")
 
 # --- 1. APP CONFIGURATION ---
-st.set_page_config(
-    page_title="Titan Architect | 2050 Apex Edition", 
-    layout="wide", 
-    page_icon="⚡",
-    initial_sidebar_state="expanded"
-)
+st.set_page_config(page_title="Titan Architect | 2050 Apex Edition", layout="wide", page_icon="⚡", initial_sidebar_state="expanded")
 
 # --- 2. ADVANCED UI SYSTEM ---
 st.markdown("""
@@ -31,20 +26,9 @@ st.markdown("""
     :root { --primary: #0f172a; --accent: #ef4444; }
     .stApp { background-color: #f8fafc; color: #1e293b; font-family: 'Inter', sans-serif; }
     [data-testid="stSidebar"] { background-color: #ffffff; border-right: 1px solid #e2e8f0; }
-    [data-testid="stSidebar"] h1 { 
-        background: linear-gradient(90deg, #0f172a, #ef4444);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        font-weight: 900 !important; font-size: 1.8rem !important;
-    }
-    .stTextInput input, .stTextArea textarea, .stSelectbox div[data-baseweb="select"] {
-        background-color: #ffffff !important; border: 1px solid #cbd5e1 !important; border-radius: 8px !important; color: #0f172a !important;
-    }
-    .stButton>button {
-        width: 100%; border-radius: 8px; height: 3.5rem;
-        background: linear-gradient(135deg, #0f172a 0%, #334155 100%);
-        color: white; font-weight: 800; border: none; box-shadow: 0 4px 15px rgba(15, 23, 42, 0.3); text-transform: uppercase; letter-spacing: 1px; transition: transform 0.2s;
-    }
+    [data-testid="stSidebar"] h1 { background: linear-gradient(90deg, #0f172a, #ef4444); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 900 !important; font-size: 1.8rem !important; }
+    .stTextInput input, .stTextArea textarea, .stSelectbox div[data-baseweb="select"] { background-color: #ffffff !important; border: 1px solid #cbd5e1 !important; border-radius: 8px !important; color: #0f172a !important; }
+    .stButton>button { width: 100%; border-radius: 8px; height: 3.5rem; background: linear-gradient(135deg, #0f172a 0%, #334155 100%); color: white; font-weight: 800; border: none; box-shadow: 0 4px 15px rgba(15, 23, 42, 0.3); text-transform: uppercase; letter-spacing: 1px; transition: transform 0.2s; }
     .stButton>button:hover { transform: translateY(-2px); }
     </style>
     """, unsafe_allow_html=True)
@@ -55,12 +39,10 @@ with st.sidebar:
     st.caption("v50.0 | Edge-Dynamic Architecture")
     st.divider()
     
-    # --- AI GENERATOR ---
     with st.expander("🤖 Titan AI Generator", expanded=False):
         raw_key = st.text_input("Groq API Key", type="password")
         groq_key = raw_key.strip() if raw_key else ""
         biz_desc = st.text_input("Business Description")
-        
         if st.button("✨ Generate Copy"):
             if not groq_key or not biz_desc: st.error("Key & Description required.")
             else:
@@ -85,11 +67,9 @@ with st.sidebar:
                             st.rerun()
                 except Exception as e: st.error(f"Error: {e}")
 
-    # 3.1 VISUAL DNA
     with st.expander("🎨 Design Studio", expanded=True):
         theme_mode = st.selectbox("Base Theme", ["Clean Corporate (Light)", "Midnight SaaS (Dark)", "Glassmorphism (Blur)", "Cyberpunk Neon", "Luxury Gold", "Forest Eco", "Ocean Breeze", "Stark Minimalist"])
         
-        # --- FIXED BUTTON TEXT COLOR PICKER ---
         c1, c2, c3 = st.columns(3)
         p_color = c1.color_picker("Primary", "#0F172A") 
         s_color = c2.color_picker("Accent", "#EF4444")  
@@ -107,15 +87,12 @@ with st.sidebar:
         h_font = st.selectbox("Headings Font", ["Montserrat", "Space Grotesk", "Playfair Display", "Oswald", "Clash Display"])
         b_font = st.selectbox("Body Font", ["Inter", "Open Sans", "Roboto", "Satoshi", "Lora"])
 
-    # 3.2 2050 FEATURE FLAGS
     with st.expander("🚀 2050 Feature Flags", expanded=True):
-        st.write("Enable Next-Gen Capabilities:")
         enable_ar = st.checkbox("Spatial Web (AR 3D Models)", value=True, help="Injects <model-viewer> for .glb links in your CSV.")
         enable_voice = st.checkbox("Voice Command Search", value=True, help="Native browser NLP for store filtering.")
         enable_context = st.checkbox("Context-Aware UI", value=True, help="Auto dark-mode based on user's local time.")
         enable_ab = st.checkbox("Edge A/B Testing", value=True, help="Client-side variant testing without tracking cookies.")
 
-    # 3.3 MODULE MANAGER
     with st.expander("🧩 Section Manager", expanded=False):
         show_hero = st.checkbox("Hero Section", value=True)
         show_stats = st.checkbox("Trust Stats", value=True)
@@ -129,7 +106,6 @@ with st.sidebar:
         show_cta = st.checkbox("Final CTA", value=True)
         show_booking = st.checkbox("Booking Engine", value=True)
 
-    # 3.4 TECHNICAL
     with st.expander("⚙️ SEO & Analytics", expanded=False):
         seo_area = st.text_input("Service Area", "Global / Online")
         seo_kw = st.text_area("SEO Keywords", "web design, no monthly fees")
@@ -160,8 +136,6 @@ with tabs[0]:
     pwa_short = st.text_input("App Short Name", biz_name[:12])
     pwa_desc = st.text_input("App Description", "Official App")
     pwa_icon = st.text_input("App Icon (512x512 PNG)", logo_url)
-    
-    st.subheader("🌍 Multi-Language")
     lang_sheet = st.text_input("Translation Sheet CSV URL")
         
     st.subheader("Social Links")
@@ -226,7 +200,6 @@ with tabs[3]:
 
 with tabs[4]:
     st.subheader("🛒 Store & Payments")
-    st.info("💡 **2050 AR Protocol:** In your Store CSV, make Column F (the 6th column) a link to a `.glb` 3D model to enable native Augmented Reality.")
     sheet_url = st.text_input("Store CSV", placeholder="https://docs.google.com/spreadsheets/d/e/.../pub?output=csv")
     custom_feat = st.text_input("Default Product Img", "https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=800")
     col_pay1, col_pay2 = st.columns(2)
@@ -253,11 +226,9 @@ with tabs[7]:
     term_txt = st.text_area("Terms", "You own the code.", height=100)
 
 with tabs[8]:
-    st.subheader("🪐 InterPlanetary File System (IPFS) Deployment")
-    st.markdown("Host your site on the decentralized Web3 network. It can never be taken down, and costs $0/month.")
+    st.subheader("🪐 InterPlanetary File System (IPFS)")
     pinata_jwt = st.text_input("Pinata API JWT (Leave blank for standard ZIP download)", type="password")
-
-# --- 5. COMPILER ENGINE (MERGED & UPGRADED) ---
+    # --- 5. COMPILER ENGINE (MERGED & UPGRADED) ---
 
 def format_text(text):
     if not text: return ""
@@ -342,13 +313,11 @@ def get_theme_css():
     label {{ color: var(--txt); font-weight: bold; margin-bottom: 0.5rem; display: block; }}
     .container {{ max-width: 1280px; margin: 0 auto; padding: 0 20px; }}
     
-    /* BUTTON TEXT COLOR FIX APPLIED HERE */
     .btn {{ display: inline-flex; align-items: center; justify-content: center; padding: 1rem 2rem; border-radius: var(--radius); font-weight: 700; text-decoration: none; transition: 0.3s; text-transform: uppercase; cursor: pointer; border: none; text-align: center; line-height: 1.4; min-height: 3.5rem; word-wrap: break-word; }}
     .btn-primary {{ background: var(--p); color: var(--btn-txt) !important; }}
     .btn-accent {{ background: var(--s); color: var(--btn-txt) !important; box-shadow: 0 10px 25px -5px var(--s); }}
     .btn:hover {{ transform: translateY(-3px); filter: brightness(1.15); }}
     
-    /* CHANGED HEADER TO NAV.MAIN-NAV FOR BLOG FIX */
     nav.main-nav {{ position: fixed; top: 0; width: 100%; z-index: 1000; background: var(--nav); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(100,100,100,0.1); padding: 1rem 0; transition: top 0.3s; }}
     .nav-flex {{ display: flex; justify-content: space-between; align-items: center; }}
     .nav-links {{ display: flex; align-items: center; }}
@@ -364,10 +333,7 @@ def get_theme_css():
     
     .card {{ background: var(--card); border-radius: var(--radius); border: 1px solid rgba(100,100,100,0.1); transition: 0.3s; display: flex; flex-direction: column; overflow: hidden; }}
     .card:hover {{ {card_hover_css} }}
-    
-    /* LINK COLOR BUG FIX */
     .card h3, .card h4, .card a:not(.btn) {{ color: var(--txt) !important; text-decoration: none; }}
-    
     .card-body {{ padding: 1.5rem; display: flex; flex-direction: column; flex-grow: 1; }}
     .card-desc {{ font-size: 0.9rem; opacity: 0.8; margin-bottom: 1.5rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }}
     .prod-img {{ width: 100%; height: 250px; object-fit: cover; background: #f1f5f9; }}
@@ -414,8 +380,8 @@ def get_theme_css():
     .share-btn svg {{ width: 20px; height: 20px; fill: white; }}
     .bg-fb {{ background: #1877F2; }} .bg-x {{ background: #000000; }} .bg-li {{ background: #0A66C2; }} .bg-wa {{ background: #25D366; }} .bg-rd {{ background: #FF4500; }} .bg-link {{ background: #64748b; }}
     
-    #top-bar {{ position: fixed; top: 0; width: 100%; background: var(--s); color: white; text-align: center; padding: 10px; z-index: 1002; font-weight: bold; font-size: 0.9rem; transition: transform 0.3s; }}
-    #top-bar a {{ color: white; text-decoration: underline; }}
+    #top-bar {{ position: fixed; top: 0; width: 100%; background: var(--s); color: var(--btn-txt); text-align: center; padding: 10px; z-index: 1002; font-weight: bold; font-size: 0.9rem; transition: transform 0.3s; }}
+    #top-bar a {{ color: var(--btn-txt); text-decoration: underline; }}
     
     #lead-popup {{ display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: var(--card); padding: 3rem; text-align: center; border-radius: var(--radius); z-index: 2000; box-shadow: 0 25px 100px rgba(0,0,0,0.5); width: 90%; max-width: 450px; border: 1px solid rgba(0,0,0,0.1); color: var(--txt); }}
     .close-popup {{ position: absolute; top: 15px; right: 15px; cursor: pointer; font-size: 1.5rem; opacity: 0.5; }}
@@ -609,7 +575,7 @@ def gen_booking_content():
 
 def gen_blog_index_html():
     if not show_blog: return ""
-    return f"""<section class="hero" style="min-height:40vh; background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('{hero_img_1}'); background-size: cover;"><div class="container"><h1>{blog_hero_title}</h1><p>{blog_hero_sub}</p></div></section><section><div class="container"><div id="blog-grid" class="grid-3">Loading Posts...</div></div></section>{gen_csv_parser()}<script defer>async function loadBlog() {{ try {{ const res = await fetch('{blog_sheet_url}'); const txt = await res.text(); const lines = txt.split(/\\r\\n|\\n/); const box = document.getElementById('blog-grid'); box.innerHTML = ''; for(let i=1; i<lines.length; i++) {{ const r = parseCSVLine(lines[i]); if(r.length > 4) {{ box.innerHTML += `<article class="card reveal" style="display:flex; flex-direction:column; justify-content:space-between;"><div><img src="${{r[5]}}" class="prod-img" loading="lazy" alt="${{r[1]}}"><span class="blog-badge" style="margin-top:1rem;">${{r[3]}}</span><h3 style="margin-top:0.5rem;"><a href="post.html?id=${{r[0]}}">${{r[1]}}</a></h3><p>${{r[4]}}</p></div><a href="post.html?id=${{r[0]}}" class="btn btn-primary" style="margin-top:1rem; width:100%;">Read More</a></article>`; }} }} }} catch(e) {{ console.log(e); }} }} window.addEventListener('load', loadBlog);</script>"""
+    return f"""<section class="hero" style="min-height:40vh; background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('{hero_img_1}'); background-size: cover;"><div class="container hero-content"><h1>{blog_hero_title}</h1><p>{blog_hero_sub}</p></div></section><section><div class="container"><div id="blog-grid" class="grid-3">Loading Posts...</div></div></section>{gen_csv_parser()}<script defer>async function loadBlog() {{ try {{ const res = await fetch('{blog_sheet_url}'); const txt = await res.text(); const lines = txt.split(/\\r\\n|\\n/); const box = document.getElementById('blog-grid'); box.innerHTML = ''; for(let i=1; i<lines.length; i++) {{ const r = parseCSVLine(lines[i]); if(r.length > 4) {{ box.innerHTML += `<article class="card reveal" style="display:flex; flex-direction:column; justify-content:space-between;"><div><img src="${{r[5]}}" class="prod-img" loading="lazy" alt="${{r[1]}}"><span class="blog-badge" style="margin-top:1rem;">${{r[3]}}</span><h3 style="margin-top:0.5rem;"><a href="post.html?id=${{r[0]}}">${{r[1]}}</a></h3><p>${{r[4]}}</p></div><a href="post.html?id=${{r[0]}}" class="btn btn-primary" style="margin-top:1rem; width:100%;">Read More</a></article>`; }} }} }} catch(e) {{ console.log(e); }} }} window.addEventListener('load', loadBlog);</script>"""
 
 def gen_product_page_content(is_demo=False):
     demo_flag = "const isDemo = true;" if is_demo else "const isDemo = false;"
@@ -704,7 +670,7 @@ def gen_blog_post_html():
     """
 
 def gen_inner_header(title):
-    return f'<div class="hero" style="min-height: 40vh; background:var(--p);"><div class="container"><h1>{title}</h1></div></div>'
+    return f'<div class="hero" style="min-height: 40vh; background:var(--p);"><div class="container hero-content"><h1>{title}</h1></div></div>'
 
 # --- 6. PAGE ASSEMBLY ---
 home_content = ""
@@ -718,7 +684,7 @@ if show_testimonials:
     t_cards = "".join([f'<div class="card reveal" style="text-align:center;"><i>"{x.split("|")[1]}"</i><br><b>- {x.split("|")[0]}</b></div>' for x in testi_data.split('\n') if "|" in x])
     home_content += f'<section style="background:#f8fafc"><div class="container"><div class="section-head reveal"><h2>Client Stories</h2></div><div class="grid-3">{t_cards}</div></div></section>'
 if show_faq: home_content += gen_faq_section()
-if show_cta: home_content += f'<section style="background:var(--s); color:white; text-align:center;"><div class="container reveal"><h2>Start Owning Your Future</h2><p style="margin-bottom:2rem;">Stop paying rent.</p><a href="contact.html" class="btn" style="background:white; color:var(--s);">Get Started</a></div></section>'
+if show_cta: home_content += f'<section style="background:var(--s); color:white; text-align:center;"><div class="container reveal"><h2>Start Owning Your Future</h2><p style="margin-bottom:2rem;">Stop paying rent.</p><a href="contact.html" class="btn" style="background:white; color:var(--s) !important;">Get Started</a></div></section>'
 
 # --- 7. DEPLOYMENT ---
 st.divider()
