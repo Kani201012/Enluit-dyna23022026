@@ -90,7 +90,6 @@ with st.sidebar:
     with st.expander("🎨 Design Studio", expanded=True):
         theme_mode = st.selectbox("Base Theme", ["Clean Corporate (Light)", "Midnight SaaS (Dark)", "Glassmorphism (Blur)", "Cyberpunk Neon", "Luxury Gold", "Forest Eco", "Ocean Breeze", "Stark Minimalist"])
         
-        # FIXED: Button Text Color added here
         c1, c2, c3 = st.columns(3)
         p_color = c1.color_picker("Primary Brand", "#0F172A") 
         s_color = c2.color_picker("Action (CTA)", "#EF4444")  
@@ -101,7 +100,6 @@ with st.sidebar:
         btn_style = st.selectbox("Button Style", ["Rounded (Default)", "Sharp (Square)", "Pill (Full Round)"])
         border_rad = "8px" if btn_style == "Rounded (Default)" else ("0px" if btn_style == "Sharp (Square)" else "50px")
         
-        # Hover Effect Style Selection
         card_hover_style = st.selectbox("Card Hover Border", ["Soft Shadow (Modern)", "Primary Color Border", "Accent Color Border (Red)"])
         overlay_opacity = st.slider("Hero Image Darkness", 0.1, 0.9, 0.5, help="Higher number makes text easier to read over images.")
         
@@ -153,7 +151,6 @@ with tabs[0]:
         biz_email = st.text_input("Email", "hello@kaydiemscriptlab.com")
     with c2:
         prod_url = st.text_input("Website URL", "https://www.stopwebrent.com")
-        # FIXED: Streamlit requires text_area height to be at least 68. Set to 100.
         biz_addr = st.text_area("Address", "Kaydiem Script Lab\nKolkata, India", height=100)
         map_iframe = st.text_area("Google Map Embed", placeholder='<iframe src="..."></iframe>', height=100)
         seo_d = st.text_area("Meta Description", "Stop paying monthly fees for web hosting.", height=100)
@@ -199,13 +196,11 @@ with tabs[1]:
     label_3 = col_s3.text_input("Label 3", "Ownership")
 
     f_title = st.text_input("Features Title", "Value Pillars")
-    # FIXED: Height 150
     feat_data_input = st.text_area("Features List", key="feat_data", height=150)
     
     st.subheader("About")
     about_h_in = st.text_input("About Title", key="about_h")
     about_img = st.text_input("About Image", "https://images.unsplash.com/photo-1543286386-713df548e9cc?q=80&w=1600")
-    # FIXED: Height 100
     about_short_in = st.text_area("Short Summary", key="about_short", height=100)
     about_long = st.text_area("Full Content", "The Digital Landlord Trap...", height=200)
 
@@ -242,7 +237,6 @@ with tabs[4]:
 
 with tabs[5]:
     st.subheader("📅 Booking Engine")
-    # FIXED: Height 150
     booking_embed = st.text_area("Embed Code", height=150, value='<!-- Calendly inline widget begin -->\n<div class="calendly-inline-widget" data-url="https://calendly.com/titan-demo/30min" style="min-width:320px;height:630px;"></div>\n<script type="text/javascript" src="https://assets.calendly.com/assets/external/widget.js" async></script>\n<!-- Calendly inline widget end -->')
     booking_title = st.text_input("Booking Title", "Book an Appointment")
     booking_desc = st.text_input("Booking Subtext", "Select a time slot.")
@@ -364,7 +358,6 @@ def get_theme_css():
     if hero_layout == "Left":
         hero_align = "text-align: left; justify-content: flex-start; align-items: center;"
 
-    # CARD HOVER FIX
     card_hover_css = "box-shadow: 0 20px 40px -10px rgba(0,0,0,0.15); transform: translateY(-5px);"
     if card_hover_style == "Primary Color Border": 
         card_hover_css += f" border-color: var(--p);"
@@ -405,7 +398,6 @@ def get_theme_css():
     label {{ color: var(--txt); font-weight: bold; margin-bottom: 0.5rem; display: block; }}
     .container {{ max-width: 1280px; margin: 0 auto; padding: 0 20px; }}
     
-    /* BUTTON TEXT COLOR FIX APPLIED HERE */
     .btn {{ 
         display: inline-flex; align-items: center; justify-content: center;
         padding: 1rem 2rem; border-radius: var(--radius); 
@@ -417,7 +409,6 @@ def get_theme_css():
     .btn-accent {{ background: var(--s); color: var(--btn-txt) !important; box-shadow: 0 10px 25px -5px var(--s); }}
     .btn:hover {{ transform: translateY(-3px); filter: brightness(1.15); }}
     
-    /* NAV TAG USED INSTEAD OF HEADER TO FIX BLOG OVERLAP */
     nav#main-navbar {{ position: fixed; top: 0; width: 100%; z-index: 1000; background: var(--nav); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(100,100,100,0.1); padding: 1rem 0; transition: top 0.3s; }}
     .nav-flex {{ display: flex; justify-content: space-between; align-items: center; }}
     .nav-links {{ display: flex; align-items: center; gap: 1.5rem; }}
@@ -434,7 +425,6 @@ def get_theme_css():
     .card {{ background: var(--card); border-radius: var(--radius); border: 1px solid rgba(100,100,100,0.1); transition: 0.3s; display: flex; flex-direction: column; overflow: hidden; }}
     .card:hover {{ {card_hover_css} }}
     
-    /* LINK COLOR BUG FIX IN CARDS */
     .card h3, .card h4, .card a:not(.btn) {{ color: var(--txt) !important; text-decoration: none; }}
     
     .card-body {{ padding: 1.5rem; display: flex; flex-direction: column; flex-grow: 1; }}
@@ -678,6 +668,19 @@ def gen_cart_system():
     }}
     window.addEventListener('load', renderCart);
     </script>
+    """
+
+def gen_wa_widget():
+    if not wa_num: return ""
+    clean_wa = wa_num.replace("+", "").replace(" ", "").replace("-", "")
+    return f"""
+    <a href="https://wa.me/{clean_wa}" target="_blank" id="wa-widget" aria-label="Chat on WhatsApp">
+        <svg viewBox="0 0 24 24" fill="white" width="32" height="32"><path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91c0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21c5.46 0 9.91-4.45 9.91-9.91c0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2m.01 1.67c2.2 0 4.26.86 5.82 2.42a8.225 8.225 0 0 1 2.41 5.83c0 4.54-3.7 8.23-8.24 8.23c-1.48 0-2.93-.39-4.19-1.15l-.3-.17l-3.12.82l.83-3.04l-.2-.32a8.188 8.188 0 0 1-1.26-4.38c.01-4.54 3.7-8.24 8.25-8.24m-3.53 3.16c-.13 0-.35.05-.54.26c-.19.2-.72.7-.72 1.72s.73 2.01.83 2.14c.1.13 1.44 2.19 3.48 3.07c.49.21.87.33 1.16.43c.49.16.94.13 1.29.08c.4-.06 1.21-.5 1.38-.98c.17-.48.17-.89.12-.98c-.05-.09-.18-.13-.37-.23c-.19-.1-.1.13-.1.13s-1.13-.56-1.32-.66c-.19-.1-.32-.15-.45.05c-.13.2-.51.65-.62.78c-.11.13-.23.15-.42.05c-.19-.1-.8-.3-1.53-.94c-.57-.5-1.02-1.12-1.21-1.45c-.11-.19-.01-.29.09-.38c.09-.08.19-.23.29-.34c.1-.11.13-.19.19-.32c.06-.13.03-.24-.01-.34c-.05-.1-.45-1.08-.62-1.48c-.16-.4-.36-.34-.51-.35c-.11-.01-.25-.01-.4-.01Z"/></path></svg>
+    </a>
+    <style>
+        #wa-widget { position: fixed; bottom: 30px; right: 30px; background: #25D366; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 999; transition: transform 0.3s; }
+        #wa-widget:hover { transform: scale(1.1); }
+    </style>
     """
 
 def gen_lang_script():
