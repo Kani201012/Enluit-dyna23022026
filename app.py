@@ -89,7 +89,7 @@ with st.sidebar:
     with st.expander("🎨 Design Studio", expanded=True):
         theme_mode = st.selectbox("Base Theme", ["Clean Corporate (Light)", "Midnight SaaS (Dark)", "Glassmorphism (Blur)", "Cyberpunk Neon", "Luxury Gold", "Forest Eco", "Ocean Breeze", "Stark Minimalist"])
         
-        # ADDED 3 COLUMNS FOR THE BUTTON TEXT COLOR PICKER
+        # --- FIXED BUTTON TEXT COLOR PICKER ---
         c1, c2, c3 = st.columns(3)
         p_color = c1.color_picker("Primary", "#0F172A") 
         s_color = c2.color_picker("Accent", "#EF4444")  
@@ -257,7 +257,7 @@ with tabs[8]:
     st.markdown("Host your site on the decentralized Web3 network. It can never be taken down, and costs $0/month.")
     pinata_jwt = st.text_input("Pinata API JWT (Leave blank for standard ZIP download)", type="password")
 
-# --- 5. COMPILER ENGINE ---
+# --- 5. COMPILER ENGINE (MERGED & UPGRADED) ---
 
 def format_text(text):
     if not text: return ""
@@ -342,12 +342,13 @@ def get_theme_css():
     label {{ color: var(--txt); font-weight: bold; margin-bottom: 0.5rem; display: block; }}
     .container {{ max-width: 1280px; margin: 0 auto; padding: 0 20px; }}
     
+    /* BUTTON TEXT COLOR FIX APPLIED HERE */
     .btn {{ display: inline-flex; align-items: center; justify-content: center; padding: 1rem 2rem; border-radius: var(--radius); font-weight: 700; text-decoration: none; transition: 0.3s; text-transform: uppercase; cursor: pointer; border: none; text-align: center; line-height: 1.4; min-height: 3.5rem; word-wrap: break-word; }}
     .btn-primary {{ background: var(--p); color: var(--btn-txt) !important; }}
     .btn-accent {{ background: var(--s); color: var(--btn-txt) !important; box-shadow: 0 10px 25px -5px var(--s); }}
     .btn:hover {{ transform: translateY(-3px); filter: brightness(1.15); }}
     
-    /* CHANGED FROM header TO nav.main-nav SO IT DOESNT OVERLAP BLOG HEADER */
+    /* CHANGED HEADER TO NAV.MAIN-NAV FOR BLOG FIX */
     nav.main-nav {{ position: fixed; top: 0; width: 100%; z-index: 1000; background: var(--nav); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(100,100,100,0.1); padding: 1rem 0; transition: top 0.3s; }}
     .nav-flex {{ display: flex; justify-content: space-between; align-items: center; }}
     .nav-links {{ display: flex; align-items: center; }}
@@ -364,7 +365,7 @@ def get_theme_css():
     .card {{ background: var(--card); border-radius: var(--radius); border: 1px solid rgba(100,100,100,0.1); transition: 0.3s; display: flex; flex-direction: column; overflow: hidden; }}
     .card:hover {{ {card_hover_css} }}
     
-    /* FIXED .btn OVERRIDE ISSUE */
+    /* LINK COLOR BUG FIX */
     .card h3, .card h4, .card a:not(.btn) {{ color: var(--txt) !important; text-decoration: none; }}
     
     .card-body {{ padding: 1.5rem; display: flex; flex-direction: column; flex-grow: 1; }}
@@ -391,7 +392,7 @@ def get_theme_css():
 
     .blog-badge {{ background: var(--s); color: var(--btn-txt); padding: 0.3rem 0.8rem; border-radius: 50px; font-size: 0.75rem; text-transform: uppercase; font-weight: bold; width: fit-content; margin-bottom: 1rem; display:inline-block; }}
     
-    #cart-float {{ position: fixed; bottom: 100px; right: 30px; background: var(--p); color: white; padding: 15px 20px; border-radius: 50px; box-shadow: 0 10px 20px rgba(0,0,0,0.2); cursor: pointer; z-index: 998; display: flex; align-items: center; gap: 10px; font-weight: bold; }}
+    #cart-float {{ position: fixed; bottom: 100px; right: 30px; background: var(--p); color: var(--btn-txt); padding: 15px 20px; border-radius: 50px; box-shadow: 0 10px 20px rgba(0,0,0,0.2); cursor: pointer; z-index: 998; display: flex; align-items: center; gap: 10px; font-weight: bold; }}
     #cart-modal {{ display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: var(--card); width: 90%; max-width: 500px; padding: 2rem; border-radius: 16px; box-shadow: 0 20px 50px rgba(0,0,0,0.3); z-index: 1001; border: 1px solid rgba(128,128,128,0.2); color: var(--txt); }}
     #cart-overlay, #lang-overlay {{ display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; }}
     .cart-item {{ display: flex; justify-content: space-between; border-bottom: 1px solid #eee; padding: 10px 0; }}
@@ -399,7 +400,7 @@ def get_theme_css():
     .local-vault {{ background: rgba(128,128,128,0.05); padding: 1rem; border-radius: 8px; margin-top: 1rem; border: 1px solid rgba(128,128,128,0.1); }}
     .local-vault input {{ width: 100%; padding: 0.8rem; margin-top: 0.5rem; border-radius: 6px; border: 1px solid #ccc; background: var(--bg); color: var(--txt); }}
     
-    #voice-btn {{ position: fixed; bottom: 170px; right: 30px; background: var(--p); color: white; border-radius: 50px; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; cursor: pointer; box-shadow: 0 10px 20px rgba(0,0,0,0.2); z-index: 998; border: none; }}
+    #voice-btn {{ position: fixed; bottom: 170px; right: 30px; background: var(--p); color: var(--btn-txt); border-radius: 50px; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; cursor: pointer; box-shadow: 0 10px 20px rgba(0,0,0,0.2); z-index: 998; border: none; }}
     .listening {{ animation: pulse 1s infinite; background: var(--s) !important; }}
     @keyframes pulse {{ 0% {{ transform: scale(1); }} 50% {{ transform: scale(1.1); }} 100% {{ transform: scale(1); }} }}
     model-viewer {{ width: 100%; height: 400px; background-color: transparent; border-radius: 12px; }}
