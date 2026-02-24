@@ -688,24 +688,59 @@ def gen_lang_script():
     return f"""
     <div id="lang-overlay" onclick="closeLangModal()"></div>
     <div id="lang-modal">
-        <h3 style="margin-bottom:1.5rem;">Select Language</h3>
-        <div onclick="switchLang('en')" class="lang-opt">🇺🇸 English</div>
-        <div onclick="switchLang('es')" class="lang-opt">🇪🇸 Español</div>
+        <h3 style="margin-bottom:1.5rem; border-bottom:1px solid #eee; padding-bottom:10px;">Select Language</h3>
+        <div class="lang-grid" style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+            <div onclick="switchLang('en', 0)" class="lang-opt">🇺🇸 English</div>
+            <div onclick="switchLang('es', 1)" class="lang-opt">🇪🇸 Español</div>
+            <div onclick="switchLang('fr', 2)" class="lang-opt">🇫🇷 Français</div>
+            <div onclick="switchLang('de', 3)" class="lang-opt">🇩🇪 Deutsch</div>
+            <div onclick="switchLang('hi', 4)" class="lang-opt">🇮🇳 हिन्दी</div>
+            <div onclick="switchLang('bn', 5)" class="lang-opt">🇧🇩 বাংলা</div>
+        </div>
     </div>
     <script defer>
     function openLangModal() {{ document.getElementById('lang-modal').style.display='block'; document.getElementById('lang-overlay').style.display='block'; }} 
     function closeLangModal() {{ document.getElementById('lang-modal').style.display='none'; document.getElementById('lang-overlay').style.display='none'; }} 
-    async function switchLang(lang) {{ 
+    
+    async function switchLang(langCode, colIndex) {{ 
         closeLangModal(); 
-        if(lang === 'en') {{ location.reload(); return; }} 
+        
+        // Save user preference
+        localStorage.setItem('titan_lang', langCode);
+        localStorage.setItem('titan_col', colIndex);
+
+        // If English, reload to reset (default)
+        if(langCode === 'en') {{ location.reload(); return; }} 
+        
         try {{ 
-            const res = await fetch('{lang_sheet}'); const txt = await res.text(); const lines = txt.split(/\\r\\n|\\n/); 
+            const res = await fetch('{lang_sheet}'); 
+            const txt = await res.text(); 
+            const lines = txt.split(/\\r\\n|\\n/); 
+            
             for(let i=1; i<lines.length; i++) {{ 
                 const row = parseCSVLine(lines[i]); 
-                if(row.length > 1) {{ const el = document.getElementById(row[0]); if(el) el.innerText = row[1]; }} 
+                // Ensure the row has enough columns for the selected language
+                if(row.length > colIndex) {{ 
+                    const el = document.getElementById(row[0]); 
+                    // Update text if element exists and translation is not empty
+                    if(el && row[colIndex]) el.innerText = row[colIndex]; 
+                }} 
             }} 
+            
+            // Update HTML lang attribute for SEO
+            document.documentElement.lang = langCode;
+            
         }} catch(e) {{ console.log("Lang Error", e); }} 
     }}
+
+    // Auto-load saved language on page refresh
+    window.addEventListener('load', () => {{
+        const savedLang = localStorage.getItem('titan_lang');
+        const savedCol = localStorage.getItem('titan_col');
+        if(savedLang && savedLang !== 'en') {{
+            switchLang(savedLang, parseInt(savedCol));
+        }}
+    }});
     </script>
     """
 
