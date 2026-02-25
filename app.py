@@ -993,10 +993,13 @@ contact_content = f"""{gen_inner_header("Contact Us")}<section><div class="conta
 c1, c2 = st.columns([3, 1])
 with c1:
     if preview_mode == "Home": st.components.v1.html(build_page("Home", home_content), height=600, scrolling=True)
-    elif preview_mode == "About": st.components.v1.html(build_page("About", f"{gen_inner_header('About')}<div class='container'>{format_text(about_long)}</div>"), height=600, scrolling=True)
+    # ADDED <section> tag here:
+    elif preview_mode == "About": st.components.v1.html(build_page("About", f"{gen_inner_header('About')}<section><div class='container'>{format_text(about_long)}</div></section>"), height=600, scrolling=True)
     elif preview_mode == "Contact": st.components.v1.html(build_page("Contact", contact_content), height=600, scrolling=True)
-    elif preview_mode == "Privacy": st.components.v1.html(build_page("Privacy", f"{gen_inner_header('Privacy')}<div class='container'>{format_text(priv_txt)}</div>"), height=600, scrolling=True)
-    elif preview_mode == "Terms": st.components.v1.html(build_page("Terms", f"{gen_inner_header('Terms')}<div class='container'>{format_text(term_txt)}</div>"), height=600, scrolling=True)
+    # ADDED <section> tag here:
+    elif preview_mode == "Privacy": st.components.v1.html(build_page("Privacy", f"{gen_inner_header('Privacy')}<section><div class='container'>{format_text(priv_txt)}</div></section>"), height=600, scrolling=True)
+    # ADDED <section> tag here:
+    elif preview_mode == "Terms": st.components.v1.html(build_page("Terms", f"{gen_inner_header('Terms')}<section><div class='container'>{format_text(term_txt)}</div></section>"), height=600, scrolling=True)
     elif preview_mode == "Blog Index": st.components.v1.html(build_page("Blog", gen_blog_index_html()), height=600, scrolling=True)
     elif preview_mode == "Blog Post (Demo)": st.components.v1.html(build_page("Article", gen_blog_post_html()), height=600, scrolling=True)
     elif preview_mode == "Product Detail (Demo)":
@@ -1012,10 +1015,10 @@ with c2:
     z_b = io.BytesIO()
     with zipfile.ZipFile(z_b, "a", zipfile.ZIP_DEFLATED, False) as zf:
         zf.writestr("index.html", build_page("Home", home_content))
-        zf.writestr("about.html", build_page("About", f"{gen_inner_header('About')}<div class='container'>{format_text(about_long)}</div>"))
+        zf.writestr("about.html", build_page("About", f"{gen_inner_header('About')}<section><div class='container'>{format_text(about_long)}</div></section>"))
         zf.writestr("contact.html", build_page("Contact", contact_content))
-        zf.writestr("privacy.html", build_page("Privacy", f"{gen_inner_header('Privacy')}<div class='container'>{format_text(priv_txt)}</div>"))
-        zf.writestr("terms.html", build_page("Terms", f"{gen_inner_header('Terms')}<div class='container'>{format_text(term_txt)}</div>"))
+         zf.writestr("privacy.html", build_page("Privacy", f"{gen_inner_header('Privacy')}<section><div class='container'>{format_text(priv_txt)}</div></section>"))
+        zf.writestr("terms.html", build_page("Terms", f"{gen_inner_header('Terms')}<section><div class='container'>{format_text(term_txt)}</div></section>"))
         if show_booking: zf.writestr("booking.html", build_page("Book Now", gen_booking_content()))
         if show_inventory: zf.writestr("product.html", build_page("Product Details", gen_product_page_content(is_demo=False)))
         if show_blog: 
