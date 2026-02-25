@@ -435,9 +435,10 @@ def get_theme_css():
     .thumb {{ width: 60px; height: 60px; border-radius: 8px; object-fit: cover; cursor: pointer; border: 2px solid transparent; opacity: 0.7; transition: 0.2s; }}
     .thumb:hover, .thumb.active {{ border-color: var(--s); opacity: 1; }}
 
-    .pricing-table {{ width: 100%; border-collapse: collapse; min-width: 600px; }}
-    .pricing-table th {{ background: var(--p); color: white; padding: 1.5rem; text-align: left; }}
-    .pricing-table td {{ padding: 1.5rem; border-bottom: 1px solid rgba(100,100,100,0.1); background: var(--card); color: var(--txt); }}
+    .pricing-wrapper {{ overflow-x: auto; -webkit-overflow-scrolling: touch; width: 100%; margin: 0 auto; }}
+    .pricing-table {{ width: 100%; border-collapse: collapse; min-width: 100%; }}
+    .pricing-table th {{ background: var(--p); color: white; padding: 1.5rem 1rem; text-align: left; }}
+    .pricing-table td {{ padding: 1.5rem 1rem; border-bottom: 1px solid rgba(100,100,100,0.1); background: var(--card); color: var(--txt); }}
 
     details {{ background: var(--card); border: 1px solid rgba(100,100,100,0.1); border-radius: 8px; margin-bottom: 1rem; padding: 1rem; cursor: pointer; color: var(--txt); }}
     details summary {{ font-weight: bold; font-size: 1.1rem; color: var(--txt); }}
@@ -487,6 +488,9 @@ def get_theme_css():
         nav#main-navbar .nav-links.active {{ left: 0; }}
         .mobile-menu {{ display: block; }}
         .about-grid, .contact-grid, .detail-view, .grid-3 {{ grid-template-columns: 1fr !important; }}
+    }}
+    /* 👉 ADD THIS NEW LINE HERE: */
+        .pricing-table th, .pricing-table td {{ padding: 1rem 0.5rem; font-size: 0.85rem; }}
     }}
     """
 
