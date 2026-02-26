@@ -501,7 +501,7 @@ def gen_2050_scripts():
     return f"<script defer>{context_js} {ab_js} {voice_js}</script>"
 
 def gen_nav():
-    logo_display = f'<img src="{logo_url}" height="40" alt="{biz_name} Logo" loading="lazy">' if logo_url else f'<span style="font-weight:900; font-size:1.5rem; color:var(--p)">{biz_name}</span>'
+    logo_display = f'<img src="{logo_url}" height="40" width="auto" alt="{biz_name} Logo" loading="eager">' if logo_url else f'<span style="font-weight:900; font-size:1.5rem; color:var(--p)">{biz_name}</span>'
     blog_link = '<a href="blog.html" onclick="toggleMenu()">Blog</a>' if show_blog else ''
     book_link = '<a href="booking.html" onclick="toggleMenu()">Book Now</a>' if show_booking else ''
     lang_btn = f'<a href="#" onclick="openLangModal()" aria-label="Switch Language">🌐 ES</a>' if lang_sheet else ''
@@ -778,7 +778,7 @@ def gen_inventory_js(is_demo=False):
                 let allImgs = c[3] ? c[3].split('|') : []; let mainImg = allImgs.length > 0 ? allImgs[0] : '{custom_feat}';
                 if(c.length > 1) {{
                     const pName = encodeURIComponent(c[0]);
-                    box.innerHTML += `<div class="card reveal"><img src="${{mainImg}}" class="prod-img" loading="lazy" alt="${{c[0]}}"><div class="card-body"><h3>${{c[0]}}</h3><p style="font-weight:bold; color:var(--s); font-size:1.1rem;">${{c[1]}}</p><p class="card-desc">${{c[2]}}</p><div style="margin-top:auto; display:grid; grid-template-columns:1fr 1fr; gap:10px;"><button onclick="addToCart('${{c[0]}}', '${{c[1]}}')" class="btn btn-primary" style="padding:0.5rem; font-size:0.8rem;">Add</button><a href="product.html?item=${{pName}}" class="btn btn-accent" style="padding:0.5rem; font-size:0.8rem;">View Details</a></div></div></div>`;
+                    box.innerHTML += `<div class="card reveal"><img src="${{mainImg}}" class="prod-img" width="300" height="250" loading="lazy" alt="${{c[0]}}"><div class="card-body"><h3>${{c[0]}}</h3><p style="font-weight:bold; color:var(--s); font-size:1.1rem;">${{c[1]}}</p><p class="card-desc">${{c[2]}}</p><div style="margin-top:auto; display:grid; grid-template-columns:1fr 1fr; gap:10px;"><button onclick="addToCart('${{c[0]}}', '${{c[1]}}')" class="btn btn-primary" style="padding:0.5rem; font-size:0.8rem;">Add</button><a href="product.html?item=${{pName}}" class="btn btn-accent" style="padding:0.5rem; font-size:0.8rem;">View Details</a></div></div></div>`;
                 }}
             }}
         }} catch(e) {{ console.log(e); }}
@@ -829,7 +829,36 @@ def build_page(title, content, extra_js=""):
     ga_script = f"<script async src='https://www.googletagmanager.com/gtag/js?id={ga_tag}'></script><script>window.dataLayer = window.dataLayer || []; function gtag(){{dataLayer.push(arguments);}} gtag('js', new Date()); gtag('config', '{ga_tag}');</script>" if ga_tag else ""
     
     # I have inserted {gsc_meta} right after the description meta tag below
-    return f"""<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>{title} | {biz_name}</title><meta name="description" content="{seo_d}">{gsc_meta}{og_meta}{pwa_tags}{gen_schema()}<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family={h_font.replace(' ', '+')}:wght@400;700;900&family={b_font.replace(' ', '+')}:wght@300;400;600&display=swap" rel="stylesheet"><style>{get_theme_css()}</style>{ga_script}{gen_2050_scripts()}</head><body><main>{gen_nav()}{content}{gen_footer()}{gen_wa_widget()}{gen_cart_system()}{gen_scripts()}{gen_lang_script()}{sw_script}{gen_popup()}{extra_js}</main></body></html>"""
+    return f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{title} | {biz_name}</title>
+    <meta name="description" content="{seo_d}">
+    {gsc_meta}{og_meta}{pwa_tags}{gen_schema()}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family={h_font.replace(' ', '+')}:wght@400;700;900&family={b_font.replace(' ', '+')}:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>{get_theme_css()}</style>
+</head>
+<body>
+    <main>
+        {gen_nav()}
+        {content}
+        {gen_footer()}
+        {gen_wa_widget()}
+        {gen_cart_system()}
+        {gen_lang_script()}
+        {gen_popup()}
+        {extra_js}
+    </main>
+    {ga_script}
+    {gen_2050_scripts()}
+    {gen_scripts()}
+    {sw_script}
+</body>
+</html>"""
 # --- PAGE SPECIFIC GENERATORS ---
 
 def gen_booking_content():
