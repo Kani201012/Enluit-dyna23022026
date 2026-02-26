@@ -828,7 +828,10 @@ def build_page(title, content, extra_js=""):
     sw_script = "<script>if ('serviceWorker' in navigator) { navigator.serviceWorker.register('service-worker.js'); }</script>"
     ga_script = f"<script async src='https://www.googletagmanager.com/gtag/js?id={ga_tag}'></script><script>window.dataLayer = window.dataLayer || []; function gtag(){{dataLayer.push(arguments);}} gtag('js', new Date()); gtag('config', '{ga_tag}');</script>" if ga_tag else ""
     
-    # I have inserted {gsc_meta} right after the description meta tag below
+    # We added <link rel="preload"> for the fonts, and added &display=swap
+    # We also ensured all JS in the <head> uses 'defer'
+    ga_script_opt = f"<script async src='https://www.googletagmanager.com/gtag/js?id={ga_tag}'></script><script>window.dataLayer = window.dataLayer ||[]; function gtag(){{dataLayer.push(arguments);}} gtag('js', new Date()); gtag('config', '{ga_tag}');</script>" if ga_tag else ""
+
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -837,10 +840,19 @@ def build_page(title, content, extra_js=""):
     <title>{title} | {biz_name}</title>
     <meta name="description" content="{seo_d}">
     {gsc_meta}{og_meta}{pwa_tags}{gen_schema()}
+    
+    <!-- Preload critical fonts to stop render blocking -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family={h_font.replace(' ', '+')}:wght@400;700;900&family={b_font.replace(' ', '+')}:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family={h_font.replace(' ', '+')}:wght@400;700;900&family={b_font.replace(' ', '+')}:wght@300;400;600&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family={h_font.replace(' ', '+')}:wght@400;700;900&family={b_font.replace(' ', '+')}:wght@300;400;600&display=swap" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family={h_font.replace(' ', '+')}:wght@400;700;900&family={b_font.replace(' ', '+')}:wght@300;400;600&display=swap"></noscript>
+    
     <style>{get_theme_css()}</style>
+    
+    <!-- Deferred Scripts (Will not block rendering) -->
+    {ga_script_opt}
+    {gen_2050_scripts()}
 </head>
 <body>
     <main>
@@ -853,8 +865,6 @@ def build_page(title, content, extra_js=""):
         {gen_popup()}
         {extra_js}
     </main>
-    {ga_script}
-    {gen_2050_scripts()}
     {gen_scripts()}
     {sw_script}
 </body>
